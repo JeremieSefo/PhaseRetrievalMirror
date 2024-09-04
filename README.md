@@ -1,0 +1,1 @@
+A Bregman Gradient Descent Algorithm with Spectral Initialization for Stable Phase Retrieval from Gaussian and Coded Diffraction Patterns (CDP) Measurements. See https://arxiv.org/pdf/2210.09248. for reference
