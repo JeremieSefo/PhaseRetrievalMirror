@@ -1,0 +1,41 @@
+Read the maths of Mirror Descent
+
+Look closer at iid sensing vectors and standard Gaussian Measurements  
+
+Implement CDP measurements
+
+Other Algos for Spectral Initialization
+
+-----------------------------------------
+
+Find a better error measure when dealing with complex sensing vectors (Fourier Transform) or images 
+
+Implement complex derivatives of \f and \psi 
+
+Test with zero-boundary real images + real matrix A first. 
+
+Add some positive noise to the measurements: Poisson or Gaussian Noise
+
+---------------------------------------------------------------
+
+Read & compute & implement Wirtinger complex derivative of f and \psi. 
+What do they mean? What behavior is to be expected from them? In the case of \psi for instance which is not complex differentiable.
+
+-------------------------------------------------------------------
+
+Implement FFT and compare with current DFT
+
+Search Papers on Complex valued derivatives in Phase Retrieval.
+
+Project in signal space to conform to some a-priori knowledge about its structure (signal is real-valued, nonnegative and spatially limited ?)
+
+Solve the scaling error caused by the Wirtinger Flow
+
+--------------------------------------------------------
+
+Any Reformulation of the Bregman Divergence between two complex-valued images? What replaces the inequality between to complex Bregman divergences?
+Find another gradient-descent check or reformulation of relative smoothness in the current complex setting.
+
+--------------------------------------------------------
+The next goal would be to find a way to get the error further down for complex objects. And yes, the non-matrix FFT that I still have to try.
+
