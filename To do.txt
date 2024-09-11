@@ -39,3 +39,13 @@ Find another gradient-descent check or reformulation of relative smoothness in t
 --------------------------------------------------------
 The next goal would be to find a way to get the error further down for complex objects. And yes, the non-matrix FFT that I still have to try.
 
+---------------------------------------------------------------------------
+
+
+Increase number of measurements: it does not even improve the reconstruction. 
+The reason maybe that the sampling frequency (image discretizaion width ) is then too small (large or coarse) to capture high frequency Fourier components.
+So choose the ratio carefully
+
+Find a better distance-based stopping criterion that makes sense, once for all.
+
+
