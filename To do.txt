@@ -48,4 +48,8 @@ So choose the ratio carefully
 
 Find a better distance-based stopping criterion that makes sense, once for all.
 
+--------------------------------------------------------------------------
+
+Implement FIENUP algorithm for comparison. Test with less symmetric (fully-complex: error gets drastic for those) images
+
 
