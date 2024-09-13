@@ -54,4 +54,13 @@ Implement FIENUP algorithm for comparison.
 Test with less symmetric fully-complex (: error gets drastic for those) images. 
 See how to beneficially include Parseval's theorem 
 
+------------------------------------------------------------------------------------------------------------
+
+FIENUP is also stuck in local minima. Convergence of Mirror Descent is only local. 
+Add shrinkwrapping from the video https://www.youtube.com/watch?v=8rJYhRMVvQw  to improve FIENUP: Projecting each on the initial support might not be enough. So update the boundary by shrinkwrapping.
+
+
+
+
+
 
