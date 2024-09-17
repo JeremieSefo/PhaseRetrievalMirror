@@ -62,7 +62,6 @@ Add shrinkwrapping from the video https://www.youtube.com/watch?v=8rJYhRMVvQw  t
 -------------------------------------------------------------
 Big Problem : Algorithm does not move the Imaginary part, not even a bit. Thus the overall poor decay of the modulus of the Fourier Error. Iterate vanishes totally after some iterations. Check why 
 
-Projecting each on the initial support does not seem necessary anymore
 
 
 
