@@ -39,18 +39,21 @@ def setUpImage(Nx, Ny):
     x_true = 2. * img_res + 2.j * (- img_res)
     x_true *= mask 
     grd_truths.append(x_true)
+    '''
     plt.imshow(x_true.real, cmap='gray')
     plt.colorbar()
-
+    '''
     x_true_real = np.real(x_true)#.reshape((Nx, Ny))
     x_true_imag = np.imag(x_true)#.reshape((Nx, Ny))
     #print(x_true_real)
     #x_true = x_true_real
+    '''
     fig, ((ax00, ax01, ax02, ax03), (ax10, ax11, ax12, ax13)) = plt.subplots(nrows = 2, ncols=4, figsize=(10,5))
-
+    
     ax00.imshow(x_true_imag, cmap='gray') 
     ax00.set_title("image ")
     ax00.axis('off')
+    '''
     return grd_truths
     ##plt.imshow(-1j * x_true)
     #plt.colorbar()
