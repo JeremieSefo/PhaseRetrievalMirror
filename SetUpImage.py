@@ -54,6 +54,6 @@ def setUpImage(Nx, Ny):
     ax00.set_title("image ")
     ax00.axis('off')
     '''
-    return grd_truths
+    return grd_truths, mask
     ##plt.imshow(-1j * x_true)
     #plt.colorbar()
