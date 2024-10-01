@@ -31,7 +31,7 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter):
     axs10.axis('off')
     axs10.set_title('Imaginary Part-Ground Truth')
     plt.colorbar(im10, ax = axs10)
-
+    
     x = X_sols[0][-1].reshape(Nx, Ny)
     im01 = axs01.imshow(x.real, cmap='gray', vmin=np.min(x.real), vmax=np.max(x.real))
     axs01.axis('off')
@@ -41,10 +41,13 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter):
     axs11.axis('off')
     axs11.set_title('Imaginary Part-FIENUP')
     plt.colorbar(im11, ax = axs11)
-
-    #f_x_sols  = [map.f(x) for x in X_sols[1]]
-    axs21.plot(np.arange(maxiter+1), [meas - np.linalg.norm(A(x))**2 for x in X_sols[0]])
-
+    f_x_sols  = [map.f(x) for x in X_sols[0]]
+    axs21.plot(np.arange(maxiter+1), [meas - (A(x)*np.conjugate(A(x))) for x in X_sols[0]])
+    axs21.set_title('Fourier Pixels Magnitude Error')
+    K = np.arange(len(f_x_sols))
+    axs31.plot(K, f_x_sols)
+    axs31.set_title('error decay')
+   
     x = X_sols[1][-1].reshape(Nx, Ny)
     im02 = axs02.imshow(x.real, cmap='gray', vmin=np.min(x.real), vmax=np.max(x.real))
     axs02.axis('off')
@@ -54,9 +57,13 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter):
     axs12.axis('off')
     axs12.set_title('Imaginary Part-MD')
     plt.colorbar(im12, ax = axs12)
-
-    axs22.plot(np.arange(maxiter+1), [meas - np.linalg.norm(A(x))**2 for x in X_sols[1]])
-
+    f_x_sols  = [map.f(x) for x in X_sols[1]]
+    axs22.plot((np.arange(maxiter+1)), [meas - (A(x)*np.conjugate(A(x))) for x in X_sols[1]])
+    axs22.set_title('Fourier Pixels Magnitude Error')
+    K = np.arange(len(f_x_sols))
+    axs32.plot(K, f_x_sols)
+    axs32.set_title('error decay')
+    
     x = X_sols[2][-1].reshape(Nx, Ny)
     im03 = axs03.imshow(x.real, cmap='gray', vmin=np.min(x.real), vmax=np.max(x.real))
     axs03.axis('off')
@@ -66,5 +73,10 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter):
     axs13.axis('off')
     axs13.set_title('Imaginary Part-CMD')
     plt.colorbar(im13, ax = axs13)
-
-    axs23.plot(np.arange(maxiter+1), [meas - np.linalg.norm(A(x))**2 for x in X_sols[2]])
+    f_x_sols  = [map.f(x) for x in X_sols[2]]
+    axs23.plot(np.arange(maxiter+1), [meas - (A(x)*np.conjugate(A(x))) for x in X_sols[2]])
+    axs23.set_title('Fourier Pixels Magnitude Error')
+    K = np.arange(len(f_x_sols))
+    axs33.plot(K, f_x_sols)
+    axs33.set_title('error decay')
+    #'''

@@ -8,14 +8,14 @@ class operators:
         self.A = A
         self.algo = algo
         self.a, self.b = 1., 0.
-        if self.algo == 'real mirror':
+        if self.algo == 'real mirror' or self.algo == 'FIENUP':
             self.a, self.b = 1., 0.
         if self.algo =='complex mirror':
             self.a, self.b = 0., 1.
 
     def psi(self, x):
         self.x = x
-        return 0.25 * ( self.a * np.linalg.norm(self.x)**4 + self.b * (np.linalg.norm(self.x.real)**4 + np.linalg.norm(self.x.imag)**4)) + 0.5 * np.linalg.norm(self.x)**2
+        return  (0.25 * ( self.a * np.linalg.norm(self.x)**4 + self.b * (np.linalg.norm(self.x.real)**4 + np.linalg.norm(self.x.imag)**4)) + 0.5 * np.linalg.norm(self.x)**2 )
 
         '''
         if self.algo == 'mirror': 
@@ -25,7 +25,7 @@ class operators:
         '''
     def grad_psi(self, z): #Wirtinger derivatives
         self.z = z
-        if self.algo == 'real mirror': 
+        if self.algo == 'real mirror' or self.algo == 'FIENUP': 
             return 1 * (np.linalg.norm(self.z)**2 + 1) * z 
         if self.algo == 'complex mirror':
             return  self.z + ((np.linalg.norm(self.z.real))**2)*self.z.real + ((np.linalg.norm(self.z.imag))**2)*self.z.imag * 1j
@@ -33,7 +33,9 @@ class operators:
     def breg_psi(self, x, u):
         self.x = x
         self.u = u
-        return self.psi(self.x) - self.psi(self.u) - np.vdot(self.grad_psi(self.u), self.x-self.u)
+        #l = np.vdot(self.grad_psi(self.u), self.x-self.u)
+        #print("look", np.vdot(self.grad_psi(self.u), self.x-self.u))
+        return self.psi(x) - self.psi(u) - np.vdot(self.grad_psi(u), x-u)
     
     def f(self, x):
         s = np.linalg.norm(self.meas- np.abs(self.A(x))**2 )**2
@@ -102,12 +104,12 @@ def spectInit(meas, A):
 
 def initialise(n, meas, A, type, real, imag, x_true_vect, mask ):
     if type == 'spectral':
-        x = spectInit(meas, A)
+        x, eigenval_real, eigenvect_real = spectInit(meas, A)
     if type == 'Gaussian':
         x = real * ((1. + 0.j)*np.random.normal(0, 1, size = (n, ) ))+ imag * (0. + 1.j)*np.random.normal(0, 1, size = (n, ) )
     if type == 'close':
         guessNoise  = ((1. + 0.j)*np.random.normal(0, 1, size = x_true_vect.shape) +  (0. + 1.j)* np.random.normal(0, 1, size = x_true_vect.shape))
         x = x_true_vect  + (1./(1. * np.linalg.norm(guessNoise)))*guessNoise
-
+    #x = (2 + 3j) * np.ones(x_true_vect.shape)
     return x * mask.reshape((n,))
 

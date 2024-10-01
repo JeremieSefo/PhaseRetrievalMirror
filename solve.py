@@ -22,8 +22,8 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
     iterates.append(x)
 
     if Algo == 'real mirror' or Algo == 'complex mirror':
-        if Algo == 'real mirror': a, b = 1, 0
-        if Algo == 'complex mirror': a, b = 0, 1
+        if Algo == 'real mirror': a, b = 1., 0.
+        if Algo == 'complex mirror': a, b = 0., 1.
         for k in range(maxiter):
             j = 0
             while  True:   
@@ -32,12 +32,12 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
                 #print(gamma)
                 x = iterates[k]
                 z =  map.grad_psi(x) - gamma * map.grad_f(x)
-                x_temp  = map.grad_psi_star(z.real) +  map.grad_psi_star(z.imag) * 1j #map.grad_psi_star(z)
-
+                x_temp  = a * map.grad_psi_star(z) + b * ( map.grad_psi_star(z.real) +  map.grad_psi_star(z.imag) * 1j ) # map.grad_psi_star(z.real) +  map.grad_psi_star(z.imag) * 1j #map.grad_psi_star(z)
+                '''
                 print('iterate x: ', iterates[k], 'x_temp ', x_temp )
                 print(f"A: {(map.breg_f(x_temp, iterates[k]))} B: { (L * map.breg_psi(x_temp, iterates[k]))}")
                 print('while loop', j, "L", L, "gap", map.breg_f(x_temp, iterates[k]) - L * map.breg_psi(x_temp, iterates[k]))
-                
+                '''
                 if (map.breg_f(x_temp, iterates[k])) >  (L  * map.breg_psi(x_temp, iterates[k])):
                     #print(f"A: {map.breg_f(x_temp, iterates[k])} B: { L * map.breg_psi(x_temp, iterates[k])}")
                     #print("hi")               
@@ -62,7 +62,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
                 j += 1 
                 #if j % 10 == 0:
                     
-            if k % 1 == 0:
+            if k % 100 == 0:
             
                print('iterate', k+1)
     if Algo == 'FIENUP':
@@ -76,7 +76,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
             #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x #Normalising with Parseval will make us reconstruct the noise
             #'''                                             #But for noiseless measurements, it does help getting the right scale
             iterates.append(x)
-            if k % 10: 
+            if k % 100 == 0: 
                 print('iteration k', k)
         
     if Algo == 'stable':
@@ -115,7 +115,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
             
             iterates.append(x)
             
-            if k % 2 == 0:
+            if k % 100 == 0:
             
                print('iterate', k+1)
 
@@ -146,7 +146,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
             
             iterates.append(x)
             
-            if k % 2 == 0:
+            if k % 100 == 0:
             
                print('iterate', k+1)        
 

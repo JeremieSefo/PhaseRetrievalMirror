@@ -16,6 +16,7 @@ def setUpImage(Nx, Ny):
     #omega = np.exp( - 2 * np.pi * 1j /int(Nx/2) * int(Ny/2) ) # (i + k *0j) *  #i+k**2-k*i   #k + i**2 - i*k
     grd_truths = []
     x_true[int(bord * Nx):int((1-bord)*Nx),int(bord * Ny):int((1-bord)*Ny)] = ((1)*1 + (1) *1j) * np.ones((int((1-2*bord)*Nx),int((1-2*bord)*Ny))) #(7 + 0j)* np.random.normal(0, 1, size = (int(Nx/2),int(Ny/2))) + (0 + 5j)* np.random.normal(0, 1, size = (int(Nx/2),int(Ny/2))) #(i + k *1j) * np.ones((int(Nx/2),int(Ny/2)))
+    x_true = x_true / np.max(np.abs(x_true))
     grd_truths.append(x_true)
     #x_true[1,1] = 2 + 1j
     #print(x_true)
@@ -26,6 +27,7 @@ def setUpImage(Nx, Ny):
     x_true3 = np.array( img.resize((Nx, Ny)))
     #x_true = x_true/np.max(np.abs(x_true))
     x_true = x_true3[:, :,0] + (1j) * x_true3[:, :,2]# np.zeros((Nx,Ny))
+    x_true = x_true / np.max(np.abs(x_true))
     x_true *= mask 
     grd_truths.append(x_true)
     #x_true *= mask 
@@ -37,6 +39,9 @@ def setUpImage(Nx, Ny):
     img = ski.img_as_float(ski.data.camera())
     img_res = ski.transform.resize(img, (Nx, Ny))
     x_true = 2. * img_res + 2.j * (- img_res)
+    x_true = x_true / np.max(np.abs(x_true))
+    
+    #x_true = (1 + 1j) * np.ones(x_true.shape)
     x_true *= mask 
     grd_truths.append(x_true)
     '''
