@@ -1,4 +1,5 @@
 import numpy as np
+from Operators import soft_shrinkage
 
 beta = .7
 def P_S(x, mask, n):
@@ -73,6 +74,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
             X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
             x = np.conjugate(A.T) @ (X)
             x = x * mask.reshape((n,))
+            x = soft_shrinkage(x.real, lamda = 0.) + soft_shrinkage(x.imag, lamda = 0.) * 1j # L-1 Regularisation
             #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x #Normalising with Parseval will make us reconstruct the noise
             #'''                                             #But for noiseless measurements, it does help getting the right scale
             iterates.append(x)

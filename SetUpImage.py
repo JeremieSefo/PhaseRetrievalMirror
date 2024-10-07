@@ -3,6 +3,10 @@ from PIL import Image
 import skimage as ski
 import matplotlib.pyplot as plt
 
+def get_phantom(dim):
+    phantom = ski.img_as_float(ski.data.shepp_logan_phantom())
+    return ski.transform.resize(phantom, (dim, dim))
+
 def setUpImage(Nx, Ny):
     
     NumPix = 0 + np.floor(0.5 * (1-2**(-1)) *Nx)
@@ -44,6 +48,10 @@ def setUpImage(Nx, Ny):
     #x_true = (1 + 1j) * np.ones(x_true.shape)
     x_true *= mask 
     grd_truths.append(x_true)
+
+    x_true[int(bord * Nx):int((1-bord)*Nx),int(bord * Ny):int((1-bord)*Ny)] = get_phantom(int((1-2*bord)*Nx)) + get_phantom(int((1-2*bord)*Nx)) * 1.j
+    x_true *= mask 
+    grd_truths.append(x_true)
     '''
     plt.imshow(x_true.real, cmap='gray')
     plt.colorbar()
@@ -59,6 +67,7 @@ def setUpImage(Nx, Ny):
     ax00.set_title("image ")
     ax00.axis('off')
     '''
+
     return grd_truths, mask
     ##plt.imshow(-1j * x_true)
     #plt.colorbar()

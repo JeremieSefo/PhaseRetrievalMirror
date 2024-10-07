@@ -35,11 +35,11 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter):
     x = X_sols[0][-1].reshape(Nx, Ny)
     im01 = axs01.imshow(x.real, cmap='gray', vmin=np.min(x.real), vmax=np.max(x.real))
     axs01.axis('off')
-    axs01.set_title('Real Part-FIENUP')
+    axs01.set_title('Real Part-Gerchberg-Saxton ER')
     plt.colorbar(im01, ax = axs01)
     im11 = axs11.imshow(x.imag, cmap='gray', vmin = np.min(x.imag), vmax = np.max(x.imag))
     axs11.axis('off')
-    axs11.set_title('Imaginary Part-FIENUP')
+    axs11.set_title('Imaginary Part-Gerchberg-Saxton ER')
     plt.colorbar(im11, ax = axs11)
     f_x_sols  = [map.f(x) for x in X_sols[0]]
     axs21.plot(np.arange(maxiter+1), [meas - (A(x)*np.conjugate(A(x))) for x in X_sols[0]])
