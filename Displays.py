@@ -1,8 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import odl
 
-def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter):
+def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter, space):
+
     
+    op = odl.FlatteningOperator(space)
+
     fig = plt.figure(figsize=(28,12))
     axs00 = plt.subplot2grid((5,4), (0,0))
     axs01 = plt.subplot2grid((5,4), (0,1))
@@ -32,7 +36,7 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter):
     axs10.set_title('Imaginary Part-Ground Truth')
     plt.colorbar(im10, ax = axs10)
     
-    x = X_sols[0][-1].reshape(Nx, Ny)
+    x = op.inverse(X_sols[0][-1])#.reshape(Nx, Ny)
     im01 = axs01.imshow(x.real, cmap='gray', vmin=np.min(x.real), vmax=np.max(x.real), origin='lower')
     axs01.axis('off')
     axs01.set_title('Real Part-Gerchberg-Saxton ER')

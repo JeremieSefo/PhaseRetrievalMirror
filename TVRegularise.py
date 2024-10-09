@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import odl
 import scipy.misc
+import primal_dual_hybrid_gradient_support as PDHGS
+
 
 
 
@@ -18,6 +20,7 @@ class support(odl.solvers.Functional):
         M -= self.mask
         func = odl.solvers.IndicatorZero(self.X)
         return func(x*M)
+    '''
     def proximal(self, x):
         """Return the proximal factory of the functional.
 
@@ -44,11 +47,35 @@ class support(odl.solvers.Functional):
         #     return support_operator(self.X, self.mask)
 
         return support_proximal
+        '''
+    def proximal(self):
+        """Return the proximal factory of the functional.
+
+        This is the zero operator.
+        """
+        def support_proximal(space, mask):
+         
+            class ProximalSupport(odl.Operator):
+
+                def __init__(self, sigma):
+                    
+                    super(ProximalSupport, self).__init__(
+                        domain=space, range=space, linear=True)
+                    if np.isscalar(sigma):
+                        self.sigma = float(sigma)
+                    else:
+                        self.sigma = space.element(sigma)
+                
+                def __call__(self, primal_tmp, out):
+                    out.assign( primal_tmp*mask)
+            return ProximalSupport       
+       
+        return support_proximal(self.X, self.mask)    
 
 import SensingMatrix as sm
 
 
-def TVregularize(y, alpha,  mask, x, X):
+def TVregularize(y, alpha,  mask, x, X, niter):
     # `min_pt` corresponds to `a`, `max_pt` to `b`
     #X = odl.uniform_discr(min_pt=[0, 0], max_pt=y.shape, shape=y.shape)
     #print('Pixel size:', X.cell_sides)
@@ -73,9 +100,9 @@ def TVregularize(y, alpha,  mask, x, X):
     # We can test whether everything makes sense by evaluating `f(L(x))`
     # at some arbitrary `x` in `X`. It should produce a scalar.
     #print(f(L(X.zero())))
+
     g = support(mask, X)
-    
-    #h = odl.solvers.IndicatorNonnegativity(X)
+    #g = odl.solvers.IndicatorNonnegativity(X)
     #print(g(np.array([2, 0, 0, 0]).reshape(y.shape)))
     L_norm = 1.1 * odl.power_method_opnorm(L, xstart=y, maxiter=20)
 
@@ -83,5 +110,5 @@ def TVregularize(y, alpha,  mask, x, X):
     sigma = 1.0 / L_norm
     
     #print('||L|| =', L_norm)
-    odl.solvers.pdhg(x, g, f, L, tau=tau, sigma=sigma, niter=20)
-    x.show('Denoised image');
+    PDHGS.pdhgs(x, g, f, L, tau=tau, sigma=sigma, niter=niter)
+    

@@ -1,5 +1,8 @@
 import numpy as np
+import odl
+import scipy.misc
 from Operators import soft_shrinkage
+from TVRegularise import TVregularize
 
 beta = .7
 def P_S(x, mask, n):
@@ -18,8 +21,10 @@ def R_S(x):
 
 
 def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
+    
+    space = odl.uniform_discr(min_pt=[0, 0], max_pt=mask.shape, shape=mask.shape)
+    
     iterates = []
-
     iterates.append(x)
 
     if Algo == 'real mirror' or Algo == 'complex mirror':
@@ -67,15 +72,26 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
             
                print('iterate', k+1)
     if Algo == 'FIENUP':
+
         for k in range(maxiter):
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
             #'''
             X = A @ np.conjugate(x)
             X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
             x = np.conjugate(A.T) @ (X)
-            x = x * mask.reshape((n,))
-            x = soft_shrinkage(x.real, lamda = 0.) + soft_shrinkage(x.imag, lamda = 0.) * 1j # L-1 Regularisation
+
+            y = space.element(x.reshape(mask.shape))
+            x0 = space.zero()
+            Mask = space.element(mask)
+
+            op = odl.FlatteningOperator(space)
+            #x = x * op(mask)
+            #x = x * mask.reshape((n,))
+            #x = soft_shrinkage(x.real, lamda = 0.) + soft_shrinkage(x.imag, lamda = 0.) * 1j # L-1 Regularisation
             #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x #Normalising with Parseval will make us reconstruct the noise
+            
+            TVregularize(y, 0.15, Mask, x0, space, niter = 10)
+            x = op(x0)
             #'''                                             #But for noiseless measurements, it does help getting the right scale
             iterates.append(x)
             if k % 100 == 0: 
@@ -152,4 +168,4 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
             
                print('iterate', k+1)        
 
-    return iterates
+    return iterates, space
