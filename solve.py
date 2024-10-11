@@ -22,11 +22,14 @@ def R_S(x):
 
 def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
     
-    space = odl.uniform_discr(min_pt=[0, 0], max_pt=mask.shape, shape=mask.shape)
-    
+    space = odl.uniform_discr(min_pt=[0, 0], max_pt=mask.shape, shape=mask.shape, dtype='complex64')
+    x0 = space.zero()
+    Mask = space.element(mask)
+    op = odl.FlatteningOperator(space)
+
     iterates = []
     iterates.append(x)
-
+    
     if Algo == 'real mirror' or Algo == 'complex mirror':
         if Algo == 'real mirror': a, b = 1., 0.
         if Algo == 'complex mirror': a, b = 0., 1.
@@ -37,8 +40,12 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
                 gamma = (1-kappa)/(L)#*mag 
                 #print(gamma)
                 x = iterates[k]
-                z =  map.grad_psi(x) - gamma * map.grad_f(x)
+                grad_psi_x = np.asarray(map.grad_psi(x))
+                grad_f_x = np.asarray(map.grad_f(x))
+                z = grad_psi_x - gamma * grad_f_x
+
                 x_temp  = a * map.grad_psi_star(z) + b * ( map.grad_psi_star(z.real) +  map.grad_psi_star(z.imag) * 1j ) # map.grad_psi_star(z.real) +  map.grad_psi_star(z.imag) * 1j #map.grad_psi_star(z)
+                              
                 '''
                 print('iterate x: ', iterates[k], 'x_temp ', x_temp )
                 print(f"A: {(map.breg_f(x_temp, iterates[k]))} B: { (L * map.breg_psi(x_temp, iterates[k]))}")
@@ -50,10 +57,26 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
                     L *= xi
                     gamma = (1-kappa)/L 
                     x = iterates[k]
-                    z = map.grad_psi(x) - gamma * map.grad_f(x)
+                    grad_psi_x = np.asarray(map.grad_psi(x))
+                    grad_f_x = np.asarray(map.grad_f(x))
+                    z = grad_psi_x - gamma * grad_f_x
                     x = a * map.grad_psi_star(z) + b * ( map.grad_psi_star(z.real) +  map.grad_psi_star(z.imag) * 1j )  # map.grad_psi_star(z)
 
                     x = x * mask.reshape((n,))
+                    ############ TV Support Regularization ############
+                    # y = space.element(x.reshape(mask.shape))
+                    # TVregularize(y, 0.15, Mask, x0, space, niter = 10)
+                    # x = op(x0) 
+
+                    #x = x * op(mask)
+                    #x = x * mask.reshape((n,))
+                    #x = soft_shrinkage(x.real, lamda = 0.) + soft_shrinkage(x.imag, lamda = 0.) * 1j # L-1 Regularisation
+                    #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x #Normalising with Parseval will make us reconstruct the noise
+                    
+                    
+                         
+
+
                     #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x 
                     '''
                     X = A @ np.conjugate(x)
@@ -80,18 +103,17 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, meas, maxiter, x ):
             X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
             x = np.conjugate(A.T) @ (X)
 
-            y = space.element(x.reshape(mask.shape))
-            x0 = space.zero()
-            Mask = space.element(mask)
+            ########## TV Support Regularizaton ####################
+            # y = space.element(x.reshape(mask.shape))
+            # TVregularize(y, 0.15, Mask, x0, space, niter = 10)
+            # x = op(x0)
 
-            op = odl.FlatteningOperator(space)
             #x = x * op(mask)
-            #x = x * mask.reshape((n,))
+            x = x * mask.reshape((n,))
             #x = soft_shrinkage(x.real, lamda = 0.) + soft_shrinkage(x.imag, lamda = 0.) * 1j # L-1 Regularisation
             #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x #Normalising with Parseval will make us reconstruct the noise
             
-            TVregularize(y, 0.15, Mask, x0, space, niter = 10)
-            x = op(x0)
+
             #'''                                             #But for noiseless measurements, it does help getting the right scale
             iterates.append(x)
             if k % 100 == 0: 

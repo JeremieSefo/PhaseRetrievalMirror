@@ -29,7 +29,7 @@ class setUpImage:
         #omega = np.exp( - 2 * np.pi * 1j /int(self.Nx/2) * int(self.Ny/2) ) # (i + k *0j) *  #i+k**2-k*i   #k + i**2 - i*k
         grd_truths = []
         x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = ((1)*1 + (1) *1j) * np.ones((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) #(7 + 0j)* np.random.normal(0, 1, size = (int(self.Nx/2),int(self.Ny/2))) + (0 + 5j)* np.random.normal(0, 1, size = (int(self.Nx/2),int(self.Ny/2))) #(i + k *1j) * np.ones((int(self.Nx/2),int(self.Ny/2)))
-        x_true = x_true / np.max(np.abs(x_true))
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
         #x_true = np.rot90(x_true, -1)  # Change axis convention
         x_true = np.rot90(x_true, -1)
         x_true = np.rot90(x_true, -1)
@@ -43,7 +43,7 @@ class setUpImage:
         x_true3 = np.array( img.resize((self.Nx, self.Ny)))
         #x_true = x_true/np.max(np.abs(x_true))
         x_true = x_true3[:, :,0] + (1j) * x_true3[:, :,2]# np.zeros((self.Nx,self.Ny))
-        x_true = x_true / np.max(np.abs(x_true))
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
         x_true *= mask 
         x_true = np.rot90(x_true, -1)
         x_true = np.rot90(x_true, -1)
@@ -57,7 +57,7 @@ class setUpImage:
         img = ski.img_as_float(ski.data.camera())
         img_res = ski.transform.resize(img, (self.Nx, self.Ny))
         x_true = 2. * img_res + 2.j * (- img_res)
-        x_true = x_true / np.max(np.abs(x_true))
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
         
         #x_true = (1 + 1j) * np.ones(x_true.shape)
         x_true *= mask 
@@ -66,6 +66,7 @@ class setUpImage:
         grd_truths.append(x_true)
 
         x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = get_phantom(int((1-2*bord)*self.Nx)) + get_phantom(int((1-2*bord)*self.Nx)) * 1.j
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
         x_true *= mask 
         x_true = np.rot90(x_true, -1)
         x_true = np.rot90(x_true, -1)
@@ -81,6 +82,7 @@ class setUpImage:
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
 
         x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = np.resize(image, (int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) + np.resize(image, (int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) *1.j # image.resize((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) #+ image.T.copy().resize((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Nx))) * 1.j
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
         #x_true = image.T.copy() + image.T.copy() * 1.j
         #x_true = x_true.resize((self.Nx, self.Ny))
         #x_true *= mask 

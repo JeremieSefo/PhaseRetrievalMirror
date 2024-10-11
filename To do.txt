@@ -66,6 +66,10 @@ Big Problem : Algorithm does not move the Imaginary part, not even a bit. Thus t
 
 As the resolution increases, we still fit perfectly the data but the reconstruction gets poorer. Regularize.
 
+--------------------------------------------------------------------------
+
+odl kills imaginary part. Fix that
+
 
 
 
