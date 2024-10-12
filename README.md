@@ -1,3 +1,3 @@
 
-![Member](./Unicaen’s_phoenix.jpg)
+![Member](./resized_image.jpg)
 Run the notebook "retrieve phase"
