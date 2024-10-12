@@ -1,1 +1,3 @@
-A Bregman Gradient Descent (Wirtinger Flow) Algorithm with Spectral Initialization for Stable Phase Retrieval from Gaussian and Coded Diffraction Patterns (CDP) Measurements. See https://arxiv.org/pdf/2210.09248. for reference
+
+![Member](./Unicaen’s_phoenix.jpg)
+Run the notebook "retrieve phase"
