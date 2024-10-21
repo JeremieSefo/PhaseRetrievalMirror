@@ -106,8 +106,8 @@ def initialise(n, meas, A, type, real, imag, x_true_vect, mask, noise_lvl ):
     if type == 'spectral':
         x, eigenval_real, eigenvect_real = spectInit(meas, A)
     if type == 'Gaussian':
-        x = real * ((1. + 0.j)*np.random.normal(0, 1, size = (n, ) ))+ imag * (0. + 1.j)*np.random.normal(0, 1, size = (n, ) )
-        x = x * (noise_lvl/(1. * np.linalg.norm(x)))
+        x = real * ((1. + 0.j)*np.random.normal(0.5, 0.25, size = (n, ) ))+ imag * (0. + 1.j)*np.random.normal(0.5, 0.25, size = (n, ) )
+        #x = x * (noise_lvl/(1. * np.linalg.norm(x)))
     if type == 'close':
         guessNoise  = ((1. + 0.j)*np.random.normal(0, 1, size = x_true_vect.shape) +  (0. + 1.j)* np.random.normal(0, 1, size = x_true_vect.shape))
         x = x_true_vect  + (noise_lvl/(1. * np.linalg.norm(guessNoise)))*guessNoise

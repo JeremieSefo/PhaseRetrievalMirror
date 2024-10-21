@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import odl
 
-def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Algos):
-
+def phase_retrie_plots_alternate(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Algos):
+    maxiter = len(X_sols)
     
     op = odl.FlatteningOperator(space)
 
@@ -36,22 +36,22 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Al
     axs10.set_title('Imaginary Part-Ground Truth')
     plt.colorbar(im10, ax = axs10)
     
-    x = op.inverse(X_sols[0][-1])#.reshape(Nx, Ny)
+    x = op.inverse(X_sols[-1])#.reshape(Nx, Ny)
     im01 = axs01.imshow(x.real, cmap='gray', vmin=np.min(x.real), vmax=np.max(x.real), origin='lower')
     axs01.axis('off')
-    axs01.set_title('Real Part - '+str(Algos[0])) # No Object Domain Constraints
+    axs01.set_title('Real Part - '+str(Algos[0]+' alternate with '+ Algos[1])) # No Object Domain Constraints
     plt.colorbar(im01, ax = axs01)
     im11 = axs11.imshow(x.imag, cmap='gray', vmin = np.min(x.imag), vmax = np.max(x.imag), origin='lower')
     axs11.axis('off')
-    axs11.set_title('Imaginary Part - '+str(Algos[0]))# No Object Domain Constraints
+    axs11.set_title('Imaginary Part - '+str(Algos[0]+' alternate with '+ Algos[1]))# No Object Domain Constraints
     plt.colorbar(im11, ax = axs11)
-    f_x_sols  = [map.f(x) for x in X_sols[0]]
-    axs21.plot(np.arange(maxiter+1), [meas - (A(x)*np.conjugate(A(x))) for x in X_sols[0]])
+    f_x_sols  = [map.f(x) for x in X_sols]
+    axs21.plot(np.arange(maxiter), [meas - (A(x)*np.conjugate(A(x))) for x in X_sols])
     axs21.set_title('Fourier Magnitude Pixels Error')
     K = np.arange(len(f_x_sols))
     axs31.plot(K, f_x_sols)
-    axs31.set_title('Fourier error decay')
-   
+    axs31.set_title('Fourier error')
+'''  
     x = op.inverse(X_sols[1][-1]) #.reshape(Nx, Ny)
     im02 = axs02.imshow(x.real, cmap='gray', vmin=np.min(x.real), vmax=np.max(x.real), origin='lower')
     axs02.axis('off')
@@ -88,3 +88,4 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Al
     axs33.plot(K, f_x_sols)
     axs33.set_title('Fourier error decay')
     #'''
+    # '''

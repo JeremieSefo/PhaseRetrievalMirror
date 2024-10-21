@@ -16,7 +16,7 @@ class support(odl.solvers.Functional):
         self.X = X
         super(support, self).__init__(self.X)
     def __call__(self, x):
-        M = np.ones(self.mask.shape)
+        M = (1. + 0.j) * np.ones(self.mask.shape)
         M -= self.mask
         func = odl.solvers.IndicatorZero(self.X)
         return func(x*M)
