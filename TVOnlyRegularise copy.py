@@ -75,7 +75,7 @@ class support(odl.solvers.Functional):
 import SensingMatrix as sm
 
 
-def TVregularize(y, alpha,  mask, x, X, niter, supportPrior):
+def TVregularize(y, alpha,  mask, x, X, niter):
     # `min_pt` corresponds to `a`, `max_pt` to `b`
     #X = odl.uniform_discr(min_pt=[0, 0], max_pt=y.shape, shape=y.shape)
     #print('Pixel size:', X.cell_sides)
@@ -100,6 +100,9 @@ def TVregularize(y, alpha,  mask, x, X, niter, supportPrior):
     # We can test whether everything makes sense by evaluating `f(L(x))`
     # at some arbitrary `x` in `X`. It should produce a scalar.
     #print(f(L(X.zero())))
+
+    g = support(mask, X)
+    #g = odl.solvers.IndicatorNonnegativity(X)
     #print(g(np.array([2, 0, 0, 0]).reshape(y.shape)))
     L_norm = 1.1 * odl.power_method_opnorm(L, xstart=y, maxiter=20)
 
@@ -107,13 +110,5 @@ def TVregularize(y, alpha,  mask, x, X, niter, supportPrior):
     sigma = 1.0 / L_norm
     
     #print('||L|| =', L_norm)
-    if supportPrior == 'yes':
-        g = support(mask, X)
-        PDHGS.pdhgs(x, g, f, L, tau=tau, sigma=sigma, niter=niter)
-    if supportPrior == 'no':
-        g = odl.solvers.ZeroFunctional(X)
-        odl.solvers.pdhg(x, g, f, L, tau=tau, sigma=sigma, niter=niter)
-    #g = odl.solvers.IndicatorNonnegativity(X)
-
-    #PDHGS.pdhgs(x, g, f, L, tau=tau, sigma=sigma, niter=niter)
+    PDHGS.pdhgs(x, g, f, L, tau=tau, sigma=sigma, niter=niter)
     
