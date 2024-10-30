@@ -112,20 +112,34 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, A_pinv, meas, maxiter, 
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
             #'''
             #A_pinv = np.linalg.pinv(A)
-
+            ######################## Self-derived and adapted Poisson DRS, do not diverge as in the paper. Reconstruction gets however more blurred with larger rho and fails to converge locally #################
+            #'''
             X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
+            Y = (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            RX_Y = 2 * Y - X
+            Z = ( (-1) * (rho/(2*(rho + 2))) * np.linalg.norm(RX_Y) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.linalg.norm(RX_Y)**2 + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
+            X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)
+            x = (ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            #'''
+
             #X = (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(X)) + (rho/(rho + 1)) * X           #/(np.abs(X))) * X
             #X = A @ ((A_pinv) @ X) #proximal point relative to the range of A. Seems to be without much effect
 
-            Y = X #projection on the object constraints. But an element in the Fourier space
+            ############## from the paper (not reproducible). iterates explode for rho larger  than zero ################
+            '''
+            X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
+            Y = (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #projection on the object constraints. But an element in the Fourier space
             R_X = (2*Y - X)
-            Z = (rho/(2*(rho + 2))) * R_X + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.linalg.norm(R_X)**2 + ((8)/(rho + 2)) * meas))**(0.5)) * np.exp(1j* np.angle(R_X)) #projection of R_X onto Fourier data constraints
+
+            #Z = (rho/(2*(rho + 2))) * R_X + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.linalg.norm(R_X)**2 + ((8)/(rho + 2)) * meas))**(0.5)) * np.exp(1j* np.angle(R_X)) #projection of R_X onto Fourier data constraints
             #X = 0.5 * X +   ((rho - 1)/(2*(rho + 1))) * R_X + (1/(rho + 1)) * Z
             
             #X = 0.5 * X +  ((rho**2 + 2*rho - 2)/(2*(rho + 1)*(rho + 2))) * (R_X) - (1/(2*(rho + 1))) * ((((rho**2/((rho + 2)**2)) * np.linalg.norm(R_X)**2 + ((8)/(rho + 2)) * meas))**(0.5)) * np.exp(1j* np.angle(R_X)) #explicit form
               
             X = 0.5 * X - (1/(rho + 2)) * R_X + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.linalg.norm(R_X)**2 + ((8)/(rho + 2)) * meas))**(0.5)) * np.exp(1j* np.angle(R_X)) #from paper
             x = (ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #(A_pinv) @ X #np.conjugate(A.T) @ (X)
+            '''
+
             '''
             ########## TV Regularizaton ####################
             y_real = space.element(x.real.reshape(mask.shape))
@@ -161,19 +175,26 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, A_pinv, meas, maxiter, 
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)  
-    if Algo == 'Gaussian-DRS': #rho = 0 boils down to Error Reduction. It fixes the intensities. No averaging
-                                #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
-                               #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A.
+    if Algo == 'Gaussian-DRS': #rho = 0 boils down to AAR. Other values of rho converge slowly and ressemble error reduction, the more rho gets to 1
+                               
+                               #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A. Though A here is unital
         rho = rho_Gau_Poi[0]
         for k in range(maxiter):
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
             #'''
             #A_pinv = np.linalg.pinv(A)
-
+            X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            Y = (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            RX_Y = 2 * Y - X
+            Z = (1) * (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(RX_Y)) + (rho/(rho + 1)) * RX_Y #amplitude-based Gaussian loss L. This is sign dependent
+            X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)
+            x = (ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            '''
             X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
             X = (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(X)) + (rho/(rho + 1)) * X           #/(np.abs(X))) * X
             #X = A @ ((A_pinv) @ X) #proximal point relative to the range of A. Seems to be without much effect 
             x = (ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #(A_pinv) @ X # np.conjugate(A.T) @ (X)         
+            '''
             '''
             ########## TV Regularizaton ####################
             y_real = space.element(x.real.reshape(mask.shape))
@@ -191,7 +212,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, A_pinv, meas, maxiter, 
             x = x.__array__()
             '''
 
-            #x = x * mask.reshape((n,))
+            #x = 
             #x = .5 * x + .5 * R_S( R_M(x) )
 
             ########## TV Support Regularizaton ####################
@@ -287,7 +308,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, A_pinv, meas, maxiter, 
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)
-    if Algo == 'Hybrid Input-Output':
+    if Algo == 'Hybrid Input-Output': ############### beta = 1 gives AAR #################
 
         for k in range(maxiter):
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
@@ -309,7 +330,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, A_pinv, meas, maxiter, 
             #x = x * op(mask)
             MASK = (A @ (mask.flatten())).reshape(mask.shape)
             conv_XrangeA_MASK = (convolve2d(X_rangeA.reshape(mask.shape), MASK, mode='same', boundary='wrap')).flatten()
-            #invFourMaskM = (np.conjugate(A.Matrix.T) @ (mask.flatten())).reshape(mask.shape)
+            
             OUTSIDEMASK = (A @ (outsideMask.flatten())).reshape(mask.shape)
             conv_OUTSIDEMASK = (convolve2d((X_bef - HIO_beta * X_rangeA).reshape(mask.shape), OUTSIDEMASK, mode='same', boundary='wrap')).flatten()
 

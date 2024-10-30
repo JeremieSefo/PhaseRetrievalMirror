@@ -1,5 +1,6 @@
-from numpy.fft import fftn
+
 import numpy as np
+from numpy.fft import fftn, ifftn, fftshift, ifftshift
 
 
 
@@ -11,7 +12,7 @@ class sensing_model_matrix_based:
         pass #print('sum',Nx + Ny )
 
     def __call__(self, x):
-        return self.Matrix @ np.conjugate(x) 
+        return (fftn(np.conj(x.reshape((self.Nx, self.Ny))), s = (self.Nx, self.Ny), norm = 'ortho')).flatten() #self.Matrix @ np.conjugate(x) 
 
 
 class iid_stdd_Gauss(sensing_model_matrix_based):
@@ -31,6 +32,8 @@ class FourierMatrix(sensing_model_matrix_based):
         super().__init__(Nx, Ny)
 
     def init_matrix(self, Nx, Ny):
+        self.Nx = Nx
+        self.Ny = Ny
         n = Nx * Ny
         #n = self.Nx * self.Ny
         (rx, ry) = 1., 1.

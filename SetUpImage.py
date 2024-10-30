@@ -15,7 +15,7 @@ class setUpImage:
 
     def __call__(self,):
  
-        NumPix = 0 + np.floor(0.5 * (1-2**(-1)) *self.Nx)
+        NumPix = 0 + 1 * np.floor(0.5 * (1-2**(-1)) *self.Nx)
         bord = NumPix/self.Nx
         #x_true = im[500:516, 500:516]
         mask = (0 + 0j) * np.zeros((self.Nx,self.Ny))
