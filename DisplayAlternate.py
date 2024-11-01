@@ -46,10 +46,10 @@ def phase_retrie_plots_alternate(idx, grd_truths, X_sols, map, A, meas, maxiter,
     axs11.set_title('Imaginary Part - '+str(Algos[0]+' alternate with '+ Algos[1]))# No Object Domain Constraints
     plt.colorbar(im11, ax = axs11)
     f_x_sols  = [map.f(x) for x in X_sols]
-    axs21.plot(np.arange(maxiter), [meas - (A(x)*np.conjugate(A(x))) for x in X_sols])
+    axs21.plot(np.arange(maxiter), [meas - (A(x).flatten()*np.conjugate(A(x).flatten())) for x in X_sols])
     axs21.set_title('Fourier Magnitude Pixels Error')
     K = np.arange(len(f_x_sols))
-    axs31.plot(K, f_x_sols)
+    axs31.loglog(K, f_x_sols)
     axs31.set_title('Fourier error')
 '''  
     x = op.inverse(X_sols[1][-1]) #.reshape(Nx, Ny)

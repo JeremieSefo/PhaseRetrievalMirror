@@ -40,7 +40,7 @@ class operators:
         return self.psi(x) - self.psi(u) - np.vdot(self.grad_psi(u), x-u)
     
     def f(self, x):
-        s = np.linalg.norm(self.meas- np.abs(self.A(x))**2 )**2
+        s = np.linalg.norm(self.meas- np.abs(self.A(x).flatten())**2 )**2
         m = len(self.meas) 
         return (s/4/m)
     

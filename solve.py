@@ -8,7 +8,7 @@ from numpy.fft import fftn, ifftn, fftshift, ifftshift
 
 
 
-def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, A_pinv, meas, maxiter, x, x_true_vect, IO_OO_HIO_beta, TvIter, TvAlpha, rho_Gau_Poi ):
+def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxiter, x, x_true_vect, IO_OO_HIO_beta, TvIter, TvAlpha, rho_Gau_Poi ):
 
     IO_beta = IO_OO_HIO_beta[0]
     OO_beta = IO_OO_HIO_beta[1]
@@ -114,12 +114,15 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, A_pinv, meas, maxiter, 
             #A_pinv = np.linalg.pinv(A)
             ######################## Self-derived and adapted Poisson DRS, do not diverge as in the paper. Reconstruction gets however more blurred with larger rho and fails to converge locally #################
             #'''
-            X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
-            Y = (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten()
+            #X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
+            Y = Af((x * mask.reshape((n,)))).flatten() # (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
             RX_Y = 2 * Y - X
             Z = ( (-1) * (rho/(2*(rho + 2))) * np.linalg.norm(RX_Y) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.linalg.norm(RX_Y)**2 + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
             X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)
-            x = (ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            x = (ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
             #'''
 
             #X = (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(X)) + (rho/(rho + 1)) * X           #/(np.abs(X))) * X
@@ -183,12 +186,15 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, A_pinv, meas, maxiter, 
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
             #'''
             #A_pinv = np.linalg.pinv(A)
-            X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
-            Y = (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten()
+            #X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            Y = Af((x * mask.reshape((n,)))).flatten() #(fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
             RX_Y = 2 * Y - X
             Z = (1) * (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(RX_Y)) + (rho/(rho + 1)) * RX_Y #amplitude-based Gaussian loss L. This is sign dependent
             X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)
-            x = (ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            x = (ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
             '''
             X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
             X = (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(X)) + (rho/(rho + 1)) * X           #/(np.abs(X))) * X
@@ -262,12 +268,13 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, A, A_pinv, meas, maxiter, 
         for k in range(maxiter):
            
            ######  x = .5 * x + .5 * R_S( R_M(x) ) ###### also works ########
-
-            X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
             P_M_X = (meas**(0.5)) * np.exp(1j* np.angle(X))  #Fourier amplitude fitting
             R_M_X = 2 * P_M_X - X     
             #R_rangeA_R_M_X = R_M_X #A is invertible with inverse A_pinv. So no need for A @ ((A_pinv) @ R_M_X) #proximal point relative to the range of A.    
-            x_new = (ifftn(R_M_X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #back into object domain
+            x_new = (ifftn(R_M_X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten() #back into object domain
             
             r_s_R_M_x = 2 * x_new * mask.reshape((n,)) - x_new # reflexion for support projection
             x = .5 * x + .5 *  r_s_R_M_x
