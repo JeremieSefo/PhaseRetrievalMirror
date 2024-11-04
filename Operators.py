@@ -45,7 +45,7 @@ class operators:
         return (s/4/m)
     
     def grad_f(self, x): #Wirtinger derivative, fast matrix form #theirs _new
-        z = self.A(x) # (fftn(x.reshape(self.mask.shape), s = self.mask.shape, norm = 'ortho')).flatten()            #self.A(x) #
+        z = (self.A(x)).flatten() # (fftn(x.reshape(self.mask.shape), s = self.mask.shape, norm = 'ortho')).flatten()            #self.A(x) #
         y = np.conjugate((self.A).Matrix) @ x
         a =  ( (self.A).Matrix).T @ ( y*( z * np.conjugate(z) - self.meas)) # (ifftn((y*( z * np.conjugate(z) - self.meas)).reshape(self.mask.shape), s = self.mask.shape, norm = 'ortho')).flatten()   #( (self.A).Matrix).T @ ( y*( z * np.conjugate(z) - self.meas))
         m = len(self.meas) 

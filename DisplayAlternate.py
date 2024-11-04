@@ -51,6 +51,9 @@ def phase_retrie_plots_alternate(idx, grd_truths, X_sols, map, A, meas, maxiter,
     K = np.arange(len(f_x_sols))
     axs31.loglog(K, f_x_sols)
     axs31.set_title('Fourier error')
+    x_tru = grd_truths[idx]
+    axs41.loglog(K, [np.linalg.norm(x-x_tru.flatten()) for x in X_sols])
+    axs41.set_title('Object domain error')
 '''  
     x = op.inverse(X_sols[1][-1]) #.reshape(Nx, Ny)
     im02 = axs02.imshow(x.real, cmap='gray', vmin=np.min(x.real), vmax=np.max(x.real), origin='lower')
