@@ -195,7 +195,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             Y = Af((x * mask.reshape((n,)))).flatten() #(fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
             RX_Y = 2 * Y - X
             Z = (1) * (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(RX_Y)) + (rho/(rho + 1)) * RX_Y #amplitude-based Gaussian loss L. This is sign dependent
-            X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)   #bad if prho >0        # (X) + 2 * alpha * (Z - Y) # performs better IEEE
+            X = (X) + 2 * alpha * (Z - Y) # (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)   #bad if prho >0        # (X) + 2 * alpha * (Z - Y) # performs better IEEE
             #X = .5 * X  + ((rho - 1)/2 * (rho + 1)) * Y + (1/(rho + 1)) * (Z)
             #X = alpha * X + (1 - alpha) * ((1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(X_save)) + (rho/(rho + 1)) * X_save) RAAR
             x = A_pinv(X) #Af.pinv(X) # #(ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
