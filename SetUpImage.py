@@ -87,6 +87,10 @@ class setUpImage:
         #x_true = x_true.resize((self.Nx, self.Ny))
         #x_true *= mask 
         grd_truths.append(x_true)
+
+
+        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
+        grd_truths.append(x_true)
         '''
         plt.imshow(x_true.real, cmap='gray')
         plt.colorbar()
