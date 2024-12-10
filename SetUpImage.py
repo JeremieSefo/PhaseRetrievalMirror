@@ -3,6 +3,26 @@ from PIL import Image
 import skimage as ski
 import matplotlib.pyplot as plt
 import scipy.misc
+import cv2
+
+def crop_center(img, crop_width, crop_height):
+    # Load the image
+    #img = cv2.imread(img_path)
+    height, width = img.shape
+
+    # Calculate the center
+    center_x, center_y = width // 2, height // 2
+
+    # Calculate the cropping coordinates
+    x1 = max(0, center_x - crop_width // 2)
+    y1 = max(0, center_y - crop_height // 2)
+    x2 = min(width, center_x + crop_width // 2)
+    y2 = min(height, center_y + crop_height // 2)
+
+    # Crop the image
+    cropped_img = img[y1:y2, x1:x2]
+
+    return cropped_img
 
 def get_phantom(dim):
     phantom = ski.img_as_float(ski.data.shepp_logan_phantom())
@@ -15,13 +35,26 @@ class setUpImage:
 
     def __call__(self,):
  
-        NumPix = 0 + 1 * np.floor(0.5 * (1-2**(-1)) *self.Nx)
-        bord = NumPix/self.Nx
+        NumPix = -0 + 0 * np.floor(0.5 * (1-2**(-1)) *self.Nx)
+        bord = 1 * NumPix/self.Nx
         #x_true = im[500:516, 500:516]
-        mask = (0 + 0j) * np.zeros((self.Nx,self.Ny))
-        mask[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = ((1)*1 + (0) *1j) * np.ones((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny)))
-        lower = int(bord * self.Nx)
-        upper = int((1-bord)*self.Nx)
+
+        mask = (0 + 0j) * np.zeros((self.Nx, self.Ny))
+        #mask[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = ((1)*1 + (0) *1j) * np.ones((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny)))
+        Lower = int(bord * self.Nx)
+        Upper = int((1-bord)*self.Nx)
+
+        s = .5 #ratio: object length/ full image length,  between 0 and 1
+        t = .2 #parameter between 0 and 1  for e(t) # 0.35  failed already
+        e = (1 - t) * 1 + t * (1/s) # e(t) between 1 and (1/s) is the ratio = estimated support length /  object length
+        #mask = (0 + 0j) * np.zeros((self.Nx, self.Ny))
+        mask[int(0.5 * (1 - e * s) * self.Nx):int(0.5 * (1 + e * s) * self.Nx), int(0.5 * (1 - e * s) * self.Ny):int(0.5 * (1 + e * s) * self.Ny)] = ((1)*1 + (0) *1j) * np.ones((int(e * s * self.Nx), int(e * s * self.Ny)))
+
+        true_support = (0 + 0j) * np.zeros((self.Nx, self.Ny))
+        true_support[ int(0.5 * (1 -  s) * self.Nx)  : int(0.5 * (1 +  s) * self.Nx) , int(0.5 * (1 -  s) * self.Ny) : int(0.5 * (1 +  s) * self.Ny) ] = ((1)*1 + (0) *1j) * np.ones((int(s * self.Nx), int(s * self.Ny)))
+        lower = int(0.5 * (1 -  s) * self.Nx)
+        upper = int(0.5 * (1 +  s) * self.Nx) 
+
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
 
@@ -40,11 +73,18 @@ class setUpImage:
         img = Image.open('ISIC_0000004_cancer.jpg')
         #img = iio.v2.imread('ISIC_0000004_cancer.jpg')
         #x_true = Image.rgb2gray(img)
-        x_true3 = np.array( img.resize((self.Nx, self.Ny)))
+
+        #print('true_support.shape', true_support.shape)
+
+        x_true3 = np.array(img) #.resize((self.Nx, self.Ny))
+        x_true3 = cv2.resize(x_true3, (int(s * self.Nx), int(s * self.Ny)), interpolation=cv2.INTER_AREA)
+        #x_true3_imag = cv2.resize(x_true3.imag, (int(s * self.Nx), int(s * self.Ny)), interpolation=cv2.INTER_AREA)
+
         #x_true = x_true/np.max(np.abs(x_true))
-        x_true = x_true3[:, :,0] + (1j) * x_true3[:, :,2]# np.zeros((self.Nx,self.Ny))
+        x_true[lower : upper, lower : upper] = x_true3[:, :,0] + (1j) * x_true3[:, :,2]# np.zeros((self.Nx,self.Ny))
+        
         x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
-        x_true *= mask 
+        #x_true *= mask 
         x_true = np.rot90(x_true, -1)
         x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
