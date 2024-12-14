@@ -25,7 +25,7 @@ class poiss_noisy_meas(noisy_meas):
         super().__init__(x_true, noise_lvl, model)
     def __call__(self,):
         self.z = self.model(self.x_true)
-        self.noise = np.random.poisson(lam = 0, size = (self.z).shape)
+        self.noise = (1. + 0.j) * np.random.poisson(lam = 1, size = (self.z).shape)
         self.noise *= self.noise_lvl/np.linalg.norm(self.noise)
         self.synt_meas = self.z * np.conjugate(self.z) + (1. + 0.j) * self.noise 
         return self.synt_meas, self.noise

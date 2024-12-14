@@ -113,6 +113,8 @@ def TVregularize(y, alpha,  mask, x, X, niter, supportPrior):
     if supportPrior == 'no':
         g = odl.solvers.ZeroFunctional(X)
         odl.solvers.pdhg(x, g, f, L, tau=tau, sigma=sigma, niter=niter)
+        # for _ in range(niter): 
+        #     odl.solvers.accelerated_proximal_gradient( L, [f_1, f_2], x, niter=1, gamma=sigma )
     #g = odl.solvers.IndicatorNonnegativity(X)
 
     #PDHGS.pdhgs(x, g, f, L, tau=tau, sigma=sigma, niter=niter)

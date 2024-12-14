@@ -4,7 +4,7 @@ from numpy.fft import fftn, ifftn, fftshift, ifftshift
 
 def generate_unitary_matrix(m, n):
     # Create a random complex matrix
-    random_matrix = np.random.randn(m, n) + 1.j * np.random.randn(m, n) #np.eye(n) #
+    random_matrix =  np.random.randn(m, n) + 1.j * np.random.randn(m, n) #(1 + 0j) * np.eye(n) #
     # Perform QR decomposition
     q, r = np.linalg.qr(random_matrix)
     # Ensure the matrix is unitary

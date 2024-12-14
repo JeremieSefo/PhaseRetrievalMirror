@@ -29,9 +29,13 @@ def get_phantom(dim):
     return ski.transform.resize(phantom, (dim, dim))
 
 class setUpImage:
-    def __init__(self, Nx, Ny):
+    def __init__(self, Nx, Ny, Kx, Ky, tx, ty):
         self.Nx = Nx
         self.Ny = Ny
+        self.Kx = Kx
+        self.Ky = Ky
+        self.tx = tx
+        self.ty = ty
 
     def __call__(self,):
  
@@ -44,16 +48,36 @@ class setUpImage:
         Lower = int(bord * self.Nx)
         Upper = int((1-bord)*self.Nx)
 
-        s = .5 #ratio: object length/ full image length,  between 0 and 1
-        t = .2 #parameter between 0 and 1  for e(t) # 0.35  failed already
-        e = (1 - t) * 1 + t * (1/s) # e(t) between 1 and (1/s) is the ratio = estimated support length /  object length
+        # object support
+        # Kx = (self.Nx - 1)//4 #any natural integer below (self.Nx - 1)//2.  
+        # Ky = (self.Ny - 1)//4 #any natural integer below (self.Ny - 1)//2.  
+        sx = (2 * self.Kx + 1) / self.Nx #ratio: object length/ full image length,  between 0 and 1
+        sy = (2 * self.Ky + 1) / self.Ny #ratio: object length/ full image length,  between 0 and 1
+        sNx = int(sx * self.Nx) #int is optional
+        sNy = int(sy * self.Ny) #int is optional
+        # mask support
+        # tx = .05 #parameter between 0 and 1  for e(t) # 0.35  failed already
+        # ty = .05 #parameter between 0 and 1  for e(t) # 0.35  failed already
+        qx = int(self.Kx + self.tx * ((self.Nx - 1)//2 - self.Kx)) #any natural integer above kx and below (self.Nx - 1)//2.
+        qy = int(self.Ky + self.ty * ((self.Ny - 1)//2 - self.Ky)) #any natural integer above ky and below (self.Ny - 1)//2.
+        #ex = (1 - tx) * 1 + tx * (1/sx) # e(t) between 1 and (1/s) is the ratio = estimated support length /  object length
+        ex = (2 * qx + 1)/ sNx # e(t) between 1 and (1/s) is the ratio = estimated support length /  object length
+        ey = (2 * qy + 1)/ sNy # e(t) between 1 and (1/s) is the ratio = estimated support length /  object length
+        esNx = int(ex * sx * self.Nx) #int is optional
+        esNy = int(ey * sy * self.Ny) #int is optional
         #mask = (0 + 0j) * np.zeros((self.Nx, self.Ny))
-        mask[int(0.5 * (1 - e * s) * self.Nx):int(0.5 * (1 + e * s) * self.Nx), int(0.5 * (1 - e * s) * self.Ny):int(0.5 * (1 + e * s) * self.Ny)] = ((1)*1 + (0) *1j) * np.ones((int(e * s * self.Nx), int(e * s * self.Ny)))
+        # int(0.5 * (1 - e * s) * self.Nx):int(0.5 * (1 + e * s) * self.Nx), int(0.5 * (1 - e * s) * self.Ny):int(0.5 * (1 + e * s) * self.Ny)
+        mask[(self.Nx - esNx)//2  : (self.Nx - esNx)//2 + esNx, (self.Ny - esNy)//2  : (self.Ny - esNy)//2 + esNy] = ((1)*1 + (0) *1j) * np.ones((esNx, esNy))
 
         true_support = (0 + 0j) * np.zeros((self.Nx, self.Ny))
-        true_support[ int(0.5 * (1 -  s) * self.Nx)  : int(0.5 * (1 +  s) * self.Nx) , int(0.5 * (1 -  s) * self.Ny) : int(0.5 * (1 +  s) * self.Ny) ] = ((1)*1 + (0) *1j) * np.ones((int(s * self.Nx), int(s * self.Ny)))
-        lower = int(0.5 * (1 -  s) * self.Nx)
-        upper = int(0.5 * (1 +  s) * self.Nx) 
+        #true_support[ int(0.5 * (1 -  s) * self.Nx)  : int(0.5 * (1 +  s) * self.Nx) , int(0.5 * (1 -  s) * self.Ny) : int(0.5 * (1 +  s) * self.Ny) ] = ((1)*1 + (0) *1j) * np.ones((int(s * self.Nx), int(s * self.Ny)))
+        true_support[(self.Nx - sNx)//2  : (self.Nx - sNx)//2 + sNx, (self.Ny - sNy)//2  : (self.Ny - sNy)//2 + sNy ] = ((1)*1 + (0) *1j) * np.ones((sNx, sNy))
+        lowerX = (self.Nx - sNx)//2
+        upperX = (self.Nx - sNx)//2 + sNx
+        lowerY = (self.Ny - sNy)//2
+        upperY = (self.Ny - sNy)//2 + sNy
+
+        
 
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
@@ -61,75 +85,82 @@ class setUpImage:
         i, k = np.meshgrid(np.arange(int(self.Nx/2)), np.arange(int(self.Ny/2)))
         #omega = np.exp( - 2 * np.pi * 1j /int(self.Nx/2) * int(self.Ny/2) ) # (i + k *0j) *  #i+k**2-k*i   #k + i**2 - i*k
         grd_truths = []
-        x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = ((1)*1 + (1) *1j) * np.ones((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) #(7 + 0j)* np.random.normal(0, 1, size = (int(self.Nx/2),int(self.Ny/2))) + (0 + 5j)* np.random.normal(0, 1, size = (int(self.Nx/2),int(self.Ny/2))) #(i + k *1j) * np.ones((int(self.Nx/2),int(self.Ny/2)))
-        x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
-        #x_true = np.rot90(x_true, -1)  # Change axis convention
+        #x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = ((1)*1 + (1) *1j) * np.ones((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) #(7 + 0j)* np.random.normal(0, 1, size = (int(self.Nx/2),int(self.Ny/2))) + (0 + 5j)* np.random.normal(0, 1, size = (int(self.Nx/2),int(self.Ny/2))) #(i + k *1j) * np.ones((int(self.Nx/2),int(self.Ny/2)))
+        im = np.ones((self.Nx, self.Ny))
+        im_res = cv2.resize(im, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        x_true[lowerX : upperX, lowerY : upperY] = (1 + 1.j) * np.ones(((sNx), (sNy))) #  im_res / np.max(np.abs(im_res)) + 1.j * (- im_res/ np.max(np.abs(im_res)))
+        #x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
         x_true = np.rot90(x_true, -1)
         x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
-        #x_true[1,1] = 2 + 1j
-        #print(x_true)
-        #x_true[0, 1:self.Ny-1] = np.ones((1,self.Ny-2))
+
+        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = Image.open('ISIC_0000004_cancer.jpg')
         #img = iio.v2.imread('ISIC_0000004_cancer.jpg')
         #x_true = Image.rgb2gray(img)
-
         #print('true_support.shape', true_support.shape)
-
         x_true3 = np.array(img) #.resize((self.Nx, self.Ny))
-        x_true3 = cv2.resize(x_true3, (int(s * self.Nx), int(s * self.Ny)), interpolation=cv2.INTER_AREA)
-        #x_true3_imag = cv2.resize(x_true3.imag, (int(s * self.Nx), int(s * self.Ny)), interpolation=cv2.INTER_AREA)
-
+        x_true3 = cv2.resize(x_true3, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        #x_true3_imag = cv2.resize(x_true3.imag, (int(s * self.Nx), int(s * self.Ny)), interpolation=cv2.INTER_AREA
         #x_true = x_true/np.max(np.abs(x_true))
-        x_true[lower : upper, lower : upper] = x_true3[:, :,0] + (1j) * x_true3[:, :,2]# np.zeros((self.Nx,self.Ny))
-        
-        x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
+        x_true[lowerX : upperX, lowerY : upperY] = x_true3[:, :,0] / np.max(np.abs(x_true3[:, :,0])) + (1j) * (x_true3[:, :,2]/ np.max(np.abs(x_true3[:, :,2])))# np.zeros((self.Nx,self.Ny))
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1j
         #x_true *= mask 
         x_true = np.rot90(x_true, -1)
         x_true = np.rot90(x_true, -1)
-        grd_truths.append(x_true)
         #x_true *= mask 
         img.save('resized_image.jpg')
-        #print(x_true[0])
-        #print(np.shape(x_true))
-        #x_true = img
-        #plt.imshow(img)
+        grd_truths.append(x_true)
+        
+        
         img = ski.img_as_float(ski.data.camera())
         img_res = ski.transform.resize(img, (self.Nx, self.Ny))
-        x_true = 2. * img_res + 2.j * (- img_res)
-        x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
-        
-        #x_true = (1 + 1j) * np.ones(x_true.shape)
-        x_true *= mask 
+        img_res = cv2.resize(img_res, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
+        #x_true *= mask 
         x_true = np.rot90(x_true, -1)
         x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
 
-        x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = get_phantom(int((1-2*bord)*self.Nx)) + get_phantom(int((1-2*bord)*self.Nx)) * 1.j
-        x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
-        x_true *= mask 
+        #x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = get_phantom(int((1-2*bord)*self.Nx)) + get_phantom(int((1-2*bord)*self.Nx)) * 1.j
+        img = get_phantom(self.Nx)
+        img_res = cv2.resize(img.real, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * ( img_res)
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
         x_true = np.rot90(x_true, -1)
         x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
 
         image = scipy.datasets.ascent().astype('complex').reshape((512, 512)) #resize((int((1-2*bord)*self.Nx)*int((1-2*bord)*self.Ny))) #.
-        image /= image.max()
+        img_res = cv2.resize(image.real, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
+        image = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
         image = np.rot90(image, 1)
         image = np.rot90(image, 1)
+        grd_truths.append(image)
     
     # Change axis convention
-        #image /= np.max(np.abs(x_true))
-        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
-
-        x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = np.resize(image, (int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) + np.resize(image, (int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) *1.j # image.resize((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) #+ image.T.copy().resize((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Nx))) * 1.j
-        x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
+       
+        #x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
+        #x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = np.resize(image, (int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) + np.resize(image, (int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) *1.j # image.resize((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) #+ image.T.copy().resize((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Nx))) * 1.j
+        #x_true = x_true.real / np.max(np.abs(x_true.real)) + x_true.imag / np.max(np.abs(x_true.imag)) *1j
+        
         #x_true = image.T.copy() + image.T.copy() * 1.j
         #x_true = x_true.resize((self.Nx, self.Ny))
         #x_true *= mask 
-        grd_truths.append(x_true)
+        #grd_truths.append(x_true)
 
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
+        grd_truths.append(x_true)
+
+        im1 = (1 + 0.j) * np.zeros((sNx, sNy))
+        im1[0, 0] = 1. + 0j
+        im1 = np.fft.fftshift(im1)
+        #self.im1 = im1
+        x_true[lowerX : upperX, lowerY : upperY] = 1. * im1 + 0.j * (im1)
+        x_true = np.fft.ifftshift(x_true)
         grd_truths.append(x_true)
         '''
         plt.imshow(x_true.real, cmap='gray')

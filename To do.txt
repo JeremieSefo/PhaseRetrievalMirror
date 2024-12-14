@@ -70,8 +70,26 @@ As the resolution increases, we still fit perfectly the data but the reconstruct
 
 odl kills imaginary part. Fix that
 
+-------------------------------------------------------------------------------
+Updates:
 
+-Realistic Box constraints
 
+Challenges: 
 
+-Memory issues (image and matrix size). E.g. Unable to allocate 256. MiB for an array with shape (4096, 4096) and data type complex128
+-SetUpImage kills first image
+
+Outlook: 
+
+-RAAR
+-early stopping
+-rescale fourth image
+-Analytic FT
+
+-shrinkwrapping, ellipse constraint
+Poisson noise
+
+- apply MAsk, TV, then data
 
 

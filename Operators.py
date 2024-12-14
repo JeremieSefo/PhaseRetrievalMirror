@@ -114,7 +114,7 @@ def initialise(n, meas, A, type, real, imag, x_true_vect, mask, noise_lvl ):
         guessNoise  = real * ((1. + 0.j)*np.random.normal(0, 1, size = x_true_vect.shape) + imag  *  (0. + 1.j)* np.random.normal(0, 1, size = x_true_vect.shape))
         x = x_true_vect  + (noise_lvl/(1. * np.linalg.norm(guessNoise)))*guessNoise
     #x = (2 + 3j) * np.ones(x_true_vect.shape)
-    return x * mask.reshape((n,))
+    return x
 
 def soft_shrinkage(x, lamda):
     return np.maximum(np.abs(x)-lamda, 0.) * np.sign(x)
