@@ -23,7 +23,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
     op = odl.FlatteningOperator(space)
 
     iterates = []
-    iterates.append(x)
+    iterates.append(x) #np.real(x)
     
     
     beta = .7
@@ -297,8 +297,8 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             #X = .5 * X  + ((rho - 1)/2 * (rho + 1)) * Y + (1/(rho + 1)) * (Z)
             #X = alpha * X + (1 - alpha) * ((1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(X_save)) + (rho/(rho + 1)) * X_save) RAAR
             x = A_pinv(X) #Af.pinv(X) # #(ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
-            x = (x * mask.reshape((n,)))
             #x = (x * mask.reshape((n,)))
+          
             '''
             X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
             X = (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(X)) + (rho/(rho + 1)) * X           #/(np.abs(X))) * X
@@ -759,35 +759,33 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
             #''' ########## An Attempt for HIO  in Fourier domain - How to include object support prior in Fourier space ########## Convolution theorem for IFT not well implemented?
             '''
-            x_bef = iterates[-1]
-            X_bef = A @ (x_bef)
-            X = A @ (x)
-            X = (meas**(0.5)) * np.exp(1j* np.angle(X))  
-                     
-            X_rangeA = A @ ((A_pinv) @ X)  
+                x_bef = iterates[-1]
+                X_bef = A @ (x_bef)
+                X = A @ (x)
+                X = (meas**(0.5)) * np.exp(1j* np.angle(X))  
+                        
+                X_rangeA = A @ ((A_pinv) @ X)  
+                
             
-         
-            ########## TV Support Regularizaton ####################
-            # y = space.element(x.reshape(mask.shape))
-            # TVregularize(y, 0.15, Mask, x0, space, niter = 10)
-            # x = op(x0)
+                ########## TV Support Regularizaton ####################
+                # y = space.element(x.reshape(mask.shape))
+                # TVregularize(y, 0.15, Mask, x0, space, niter = 10)
+                # x = op(x0)
 
-            #x = x * op(mask)
-            MASK = (A @ (mask.flatten())).reshape(mask.shape)
-            conv_XrangeA_MASK = (convolve2d(X_rangeA.reshape(mask.shape), MASK, mode='same', boundary='wrap')).flatten()
-            
-            OUTSIDEMASK = (A @ (outsideMask.flatten())).reshape(mask.shape)
-            conv_OUTSIDEMASK = (convolve2d((X_bef - HIO_beta * X_rangeA).reshape(mask.shape), OUTSIDEMASK, mode='same', boundary='wrap')).flatten()
+                #x = x * op(mask)
+                MASK = (A @ (mask.flatten())).reshape(mask.shape)
+                conv_XrangeA_MASK = (convolve2d(X_rangeA.reshape(mask.shape), MASK, mode='same', boundary='wrap')).flatten()
+                
+                OUTSIDEMASK = (A @ (outsideMask.flatten())).reshape(mask.shape)
+                conv_OUTSIDEMASK = (convolve2d((X_bef - HIO_beta * X_rangeA).reshape(mask.shape), OUTSIDEMASK, mode='same', boundary='wrap')).flatten()
 
 
-            X = conv_XrangeA_MASK + conv_OUTSIDEMASK #HIO in Fourier domain
-            x = np.conjugate(A.T) @ (X)
+                X = conv_XrangeA_MASK + conv_OUTSIDEMASK #HIO in Fourier domain
+                x = np.conjugate(A.T) @ (X)
 
-            #x = soft_shrinkage(x.real, lamda = 0.) + soft_shrinkage(x.imag, lamda = 0.) * 1j # L-1 Regularisation
-            #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x #Normalising with Parseval will make us reconstruct the noise
+                #x = soft_shrinkage(x.real, lamda = 0.) + soft_shrinkage(x.imag, lamda = 0.) * 1j # L-1 Regularisation
+                #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x #Normalising with Parseval will make us reconstruct the noise
             '''
-
-
             #''' ########## HIO in object domain - support prior ##########
 
             x_bef = iterates[-1]
@@ -796,13 +794,44 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             #X = A @ ((A_pinv) @ X)
             x = A_pinv(X) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
          
-            ########## TV Support Regularizaton ####################
-            # y = space.element(x.reshape(mask.shape))
-            # TVregularize(y, 0.15, Mask, x0, space, niter = 10)
-            # x = op(x0)
+            # indices = np.logical_or(np.logical_and(np.angle(x) < 0, mask.reshape((n,))),  
+            #                         np.logical_and(np.angle(x) > (np.pi/2), mask.reshape((n,))),
+            #                         np.logical_not(mask.reshape((n,))))
+            indices = np.logical_or(np.logical_and(x<0, mask.reshape((n,))), 
+                                np.logical_not(mask.reshape((n,))))
+            x[indices] = (x_bef[indices] - HIO_beta * x[indices])
+            
+            #x = x * mask.reshape((n,)) + (x_bef - HIO_beta * x) * outsideMask.reshape((n,)) 
+            
 
-            #x = x * op(mask)
-            x = x * mask.reshape((n,)) + (x_bef - HIO_beta * x) * outsideMask.reshape((n,)) 
+            #x = soft_shrinkage(x.real, lamda = 0.) + soft_shrinkage(x.imag, lamda = 0.) * 1j # L-1 Regularisation
+            #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x #Normalising with Parseval will make us reconstruct the noise
+            
+
+                                                        #But for noiseless measurements, it does help getting the right scale
+            #'''
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k)
+    if Algo == 'Hybrid Input-Output real': ############### beta = 1 gives AAR #################
+
+        for k in range(maxiter):
+            
+            #''' ########## HIO in object domain - support prior ##########
+            iterates[-1] = np.real(x) # real image to initialize
+            x_bef = iterates[-1]
+            X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            X = (meas**(0.5)) * np.exp(1j* np.angle(X))               
+            #X = A @ ((A_pinv) @ X)
+            x = A_pinv(X) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+
+            x = np.real(x) + 0.j
+            indices = np.logical_or(np.logical_and(x<0, mask.reshape((n,))), 
+                                np.logical_not(mask.reshape((n,))))
+            x[indices] = x_bef[indices]-HIO_beta*x[indices]
+            #x = x * mask.reshape((n,)) + (x_bef - HIO_beta * x) * outsideMask.reshape((n,)) 
+            
+
             #x = soft_shrinkage(x.real, lamda = 0.) + soft_shrinkage(x.imag, lamda = 0.) * 1j # L-1 Regularisation
             #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x #Normalising with Parseval will make us reconstruct the noise
             
@@ -810,20 +839,20 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
                                                         #But for noiseless measurements, it does help getting the right scale
             #'''
             '''
-            ########## TV Regularizaton ####################
-            y_real = space.element(x.real.reshape(mask.shape))
-            y_imag = space.element(x.imag.reshape(mask.shape))
-            xr = x0
-            xi = x0
-            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'no') 
-            TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'no') 
-            lincomb = odl.LinCombOperator(space, 1, 1.j)
-            XX = odl.ProductSpace(space, space)
-            xx = XX.element([xr, xi])
-            x = space.element(x.reshape(mask.shape))
-            lincomb(xx, out = x) 
-            x = op(x)
-            x = x.__array__()
+                ########## TV Regularizaton ####################
+                y_real = space.element(x.real.reshape(mask.shape))
+                y_imag = space.element(x.imag.reshape(mask.shape))
+                xr = x0
+                xi = x0
+                TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'no') 
+                TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'no') 
+                lincomb = odl.LinCombOperator(space, 1, 1.j)
+                XX = odl.ProductSpace(space, space)
+                xx = XX.element([xr, xi])
+                x = space.element(x.reshape(mask.shape))
+                lincomb(xx, out = x) 
+                x = op(x)
+                x = x.__array__()
             '''
 
 

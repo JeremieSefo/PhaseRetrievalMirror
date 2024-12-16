@@ -92,4 +92,9 @@ Poisson noise
 
 - apply MAsk, TV, then data
 
+--------------------------------------------------------------------------------
+Observations: 
 
+- With precise mask, one needs thousands of iterations to reconstructs something like the ground truth.
+- Tuelwer's implementation ( meant only for real positive images) of FiENUP HIO seems to converge only when the initial guess fits the data.
+   sometimes, even that is not sufficient (???)

@@ -4,6 +4,7 @@ import skimage as ski
 import matplotlib.pyplot as plt
 import scipy.misc
 import cv2
+import imageio
 
 def crop_center(img, crop_width, crop_height):
     # Load the image
@@ -94,6 +95,13 @@ class setUpImage:
         x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
 
+        image = imageio.imread('ring.png', mode='F')
+        image = np.array(image)
+        image = cv2.resize(image, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        image_padded = np.pad(image, (self.Nx - sNx)//2, 'constant')
+        x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 1.j
+        grd_truths.append(x_true)
+
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = Image.open('ISIC_0000004_cancer.jpg')
         #img = iio.v2.imread('ISIC_0000004_cancer.jpg')
@@ -112,32 +120,69 @@ class setUpImage:
         img.save('resized_image.jpg')
         grd_truths.append(x_true)
         
-        
+        #complex cameraman
+        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = ski.img_as_float(ski.data.camera())
         img_res = ski.transform.resize(img, (self.Nx, self.Ny))
         img_res = cv2.resize(img_res, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
         x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
         x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
         #x_true *= mask 
-        x_true = np.rot90(x_true, -1)
-        x_true = np.rot90(x_true, -1)
+        # x_true = np.rot90(x_true, -1)
+        # x_true = np.rot90(x_true, -1)
+        grd_truths.append(x_true)
+
+        #real cameraman
+        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
+        img = ski.img_as_float(ski.data.camera())
+        img_res = ski.transform.resize(img, (self.Nx, self.Ny))
+        img_res = cv2.resize(img_res, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 0.j# * (- img_res)
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + 0.j #* (x_true.imag / np.max(np.abs(x_true.imag))) * 
+        #x_true *= mask 
+        # x_true = np.rot90(x_true, -1)
+        # x_true = np.rot90(x_true, -1)
+        grd_truths.append(x_true)
+
+        # cameraman
+        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
+        image = imageio.imread('cameraman.png', mode='F')
+        image = np.array(image)
+        image = cv2.resize(image, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        image_padded = np.pad(image, (self.Nx - sNx)//2, 'constant')
+        x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 1.j
+        # x_true = np.rot90(x_true, -1)
+        # x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
 
         #x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = get_phantom(int((1-2*bord)*self.Nx)) + get_phantom(int((1-2*bord)*self.Nx)) * 1.j
+        #complex shepp logan
+        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = get_phantom(self.Nx)
         img_res = cv2.resize(img.real, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
         x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * ( img_res)
         x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
-        x_true = np.rot90(x_true, -1)
-        x_true = np.rot90(x_true, -1)
+        # x_true = np.rot90(x_true, -1)
+        # x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
 
+        #real shepp logan
+        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
+        img = get_phantom(self.Nx)
+        img_res = cv2.resize(img.real, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 0.j #* ( img_res)
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + 0.j # (x_true.imag / np.max(np.abs(x_true.imag))) *
+        # x_true = np.rot90(x_true, -1)
+        # x_true = np.rot90(x_true, -1)
+        grd_truths.append(x_true)
+
+        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         image = scipy.datasets.ascent().astype('complex').reshape((512, 512)) #resize((int((1-2*bord)*self.Nx)*int((1-2*bord)*self.Ny))) #.
         img_res = cv2.resize(image.real, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
         x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
         image = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
-        image = np.rot90(image, 1)
-        image = np.rot90(image, 1)
+        # image = np.rot90(image, 1)
+        # image = np.rot90(image, 1)
         grd_truths.append(image)
     
     # Change axis convention
