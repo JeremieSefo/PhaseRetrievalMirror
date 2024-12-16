@@ -1,3 +1,3 @@
 
 ![Member](./resized_image.jpg)
-Run the notebook "retrieve phase"
+Run the notebook "retrieve_phase"
