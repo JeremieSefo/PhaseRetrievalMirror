@@ -98,3 +98,10 @@ Observations:
 - With precise mask, one needs thousands of iterations to reconstructs something like the ground truth.
 - Tuelwer's implementation ( meant only for real positive images) of FiENUP HIO seems to converge only when the initial guess fits the data.
    sometimes, even that is not sufficient (???)
+
+--------------------------------------------------------------------------------
+
+- What convergence to expect? 
+- Proximal theory for DRS Analysis
+- RMRS looks different and better than RSRM. Why?
+

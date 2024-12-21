@@ -49,8 +49,8 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Al
     axs11.set_title('Imaginary Part - '+str(Algos[0]))# No Object Domain Constraints
     plt.colorbar(im11, ax = axs11)
     f_x_sols  = [map.f(x) for x in X_sols[0]]
-    FMPE0 = [((meas - np.linalg.norm(A(x).flatten())**2)**(1))/((2 * np.sqrt(m))**(1)) for x in X_sols[0]]
-    axs21.plot(np.arange(maxiter+1), FMPE0) #np.sum(((A(x)*np.conjugate(A(x))) + np.log(math.factorial(meas)) - meas * np.log((A(x)*np.conjugate(A(x)))))) 
+    #FMPE0 = [((meas - np.linalg.norm(A(x).flatten())**2)**(1))/((2 * np.sqrt(m))**(1)) for x in X_sols[0]]
+    axs21.plot(np.arange(maxiter+1), [((meas - np.linalg.norm(A(x).flatten())**2)**(1))/((2 * np.sqrt(m))**(1)) for x in X_sols[0]]) #np.sum(((A(x)*np.conjugate(A(x))) + np.log(math.factorial(meas)) - meas * np.log((A(x)*np.conjugate(A(x)))))) 
     axs21.set_title('Fourier Magnitude Pixels Error')
     K = np.arange(len(f_x_sols))
     axs31.loglog(K, f_x_sols)
@@ -71,8 +71,8 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Al
     #axs12.set_title('Imaginary Part-MD')
     plt.colorbar(im12, ax = axs12)
     f_x_sols  = [map.f(x)  for x in X_sols[1]] #Poisson likelihood np.sum(((A(x)*np.conjugate(A(x))) + np.log(scipy.special.gamma(meas + np.ones_like(meas))) - meas * np.log((A(x)*np.conjugate(A(x))))))
-    FMPE1 = [((meas - np.linalg.norm(A(x).flatten())**2)**(1))/((2 * np.sqrt(m))**(1)) for x in X_sols[1]]
-    axs22.plot((np.arange(maxiter+1)), FMPE1) #Poisson likelihood ((A(x)*np.conjugate(A(x))) + np.log(scipy.special.gamma(meas + np.ones_like(meas))) - meas * np.log((A(x)*np.conjugate(A(x)))))
+    #FMPE1 = [((meas - np.linalg.norm(A(x).flatten())**2)**(1))/((2 * np.sqrt(m))**(1)) for x in X_sols[1]]
+    axs22.plot((np.arange(maxiter+1)), [((meas - np.linalg.norm(A(x).flatten())**2)**(1))/((2 * np.sqrt(m))**(1)) for x in X_sols[1]]) #Poisson likelihood ((A(x)*np.conjugate(A(x))) + np.log(scipy.special.gamma(meas + np.ones_like(meas))) - meas * np.log((A(x)*np.conjugate(A(x)))))
     axs22.set_title('Fourier Magnitude Pixels Error')
     K = np.arange(len(f_x_sols))
     axs32.loglog(K, f_x_sols)
@@ -93,8 +93,8 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Al
     #axs13.set_title('Imaginary Part-CMD')
     plt.colorbar(im13, ax = axs13)
     f_x_sols  = [map.f(x) for x in X_sols[2]]
-    FMPE2 = [((meas - np.linalg.norm(A(x).flatten())**2)**(1))/((2 * np.sqrt(m))**(1)) for x in X_sols[2]]
-    axs23.plot(np.arange(maxiter+1), FMPE2)
+    #FMPE2 = [((meas - np.linalg.norm(A(x).flatten())**2)**(1))/((2 * np.sqrt(m))**(1)) for x in X_sols[2]]
+    axs23.plot(np.arange(maxiter+1), [((meas - np.linalg.norm(A(x).flatten())**2)**(1))/((2 * np.sqrt(m))**(1)) for x in X_sols[2]])
     axs23.set_title('Fourier Magnitude Pixels Error')
     K = np.arange(len(f_x_sols))
     axs33.loglog(K, f_x_sols)
@@ -102,5 +102,5 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Al
     x_tru = grd_truths[idx]
     axs43.loglog(K, [np.linalg.norm(x-x_tru.flatten()) for x in X_sols[2]])
     axs43.set_title('Object domain error')
-    return FMPE0, FMPE1, FMPE2 
+    #return FMPE0, FMPE1, FMPE2 
     #'''
