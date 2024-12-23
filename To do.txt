@@ -106,7 +106,25 @@ Observations:
 - RMRS looks different and better than RSRM. Why?
 
 ---------------------------------------------------------------------------------
+Outlook : 
 
- Challenges: 
+-add a section on the FT (invariance properties after translation, rotation, ... ) and then, discuss the unicity problem of Fourier phase retrieval
 
- -Display takes too long
+-prove that HIO reconstructs real and radially symmetric images, with no need of support knowledge, but very sensitive to a non-constant noise in the magnitudes in the initialization (see ipad, FT)
+
+Observations:
+
+1-
+A space shift (translation) is Fourier transformed into a phase-changed but norm-invariant measurement. 
+So, losing the phase during CDI measurements does not delete the shape information of the signal, but only its location in space. 
+
+The question is then how does the phase determine the image? 
+In otherwords, are there visual similarities or transformations (a part from  translations and rotations)  between two images with thier FT having the same norm but different phases?
+
+2-
+If an image is real and symmetric, its FT has no phase (i.e. is real). Such images are then very easy to reconstruct
+
+
+Challenges: 
+
+-Display takes too long
