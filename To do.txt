@@ -105,3 +105,8 @@ Observations:
 - Proximal theory for DRS Analysis
 - RMRS looks different and better than RSRM. Why?
 
+---------------------------------------------------------------------------------
+
+ Challenges: 
+
+ -Display takes too long
