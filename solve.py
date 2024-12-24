@@ -519,7 +519,8 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             x = A_pinv(X) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
         
             #x = x * op(mask)
-            x = x * mask.reshape((n,)) + (x_bef - HIO_beta * x) * outsideMask.reshape((n,)) 
+            indices = np.logical_not(mask.reshape((n,)))
+            x[indices] = (x_bef[indices] - HIO_beta * x[indices])
     
             ########## TV Regularizaton ####################
             y_real = space.element(x.real.reshape(mask.shape))

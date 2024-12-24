@@ -103,7 +103,7 @@ Observations:
 
 - What convergence to expect? 
 - Proximal theory for DRS Analysis
-- RMRS looks different and better than RSRM. Why?
+- RMRS looks different and better than RSRM. Why? RSRM = HIO, RMRS = RAAR
 
 ---------------------------------------------------------------------------------
 Outlook : 
@@ -111,6 +111,7 @@ Outlook :
 -add a section on the FT (invariance properties after translation, rotation, ... ) and then, discuss the unicity problem of Fourier phase retrieval
 
 -prove that HIO reconstructs real and radially symmetric images, with no need of support knowledge, but very sensitive to a non-constant noise in the magnitudes in the initialization (see ipad, FT)
+
 
 Observations:
 
@@ -124,6 +125,22 @@ In otherwords, are there visual similarities or transformations (a part from  tr
 2-
 If an image is real and symmetric, its FT has no phase (i.e. is real). Such images are then very easy to reconstruct
 
+3-
+HIO real can reconstruct real radially symmetric (rs) images, even with arbitrary initial magnitudes (from *real* initial image), but in few steps. More than needed diverges.
+
+4-
+Box constraint makes RAAR and HIO able to recover real and rs images, provided a real initialization. 
+The box also seems to hinder HIO from wandering away from the true real image.
+This effect was for some rare occasions not significant on complex images. 
+First TV cleans up the reconstruction.
+
+5-
+Regarding the stopping criterion, with a noise level of l (= 10-1), and data size m (= 32*32), the loss function shouldn't drop below l^2 / 4*m  (= 10-5). 
+Surprisingly, like HIO, RSRM stagnates around 10-3 even after 15k iterations. RSRM reconstructs best. (precise support is applied on the complex ring of Gaussian image )
+Meanwhile, RAAR ( = RMRS ) did attain 10-5
+
+6-
+For inconsistency, I thought a single dot image (leading to constant 1 magnitudes ) corrupted by a strong noise, would do. Quite an exception.
 
 Challenges: 
 

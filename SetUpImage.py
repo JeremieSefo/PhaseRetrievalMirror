@@ -83,24 +83,30 @@ class setUpImage:
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
 
+        # (ones + i ones) image
+
         i, k = np.meshgrid(np.arange(int(self.Nx/2)), np.arange(int(self.Ny/2)))
         #omega = np.exp( - 2 * np.pi * 1j /int(self.Nx/2) * int(self.Ny/2) ) # (i + k *0j) *  #i+k**2-k*i   #k + i**2 - i*k
         grd_truths = []
         #x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = ((1)*1 + (1) *1j) * np.ones((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) #(7 + 0j)* np.random.normal(0, 1, size = (int(self.Nx/2),int(self.Ny/2))) + (0 + 5j)* np.random.normal(0, 1, size = (int(self.Nx/2),int(self.Ny/2))) #(i + k *1j) * np.ones((int(self.Nx/2),int(self.Ny/2)))
         im = np.ones((self.Nx, self.Ny))
         im_res = cv2.resize(im, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
-        x_true[lowerX : upperX, lowerY : upperY] = (1 + 1.j) * np.ones(((sNx), (sNy))) #  im_res / np.max(np.abs(im_res)) + 1.j * (- im_res/ np.max(np.abs(im_res)))
+        x_true[lowerX : upperX, lowerY : upperY] = (1 + 0.j) * np.ones(((sNx), (sNy))) #  im_res / np.max(np.abs(im_res)) + 1.j * (- im_res/ np.max(np.abs(im_res)))
         #x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
         x_true = np.rot90(x_true, -1)
         x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
 
+        # ring of Gaussians balls 
+
         image = imageio.imread('ring.png', mode='F')
         image = np.array(image)
         image = cv2.resize(image, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
         image_padded = np.pad(image, (self.Nx - sNx)//2, 'constant')
-        x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 1.j
+        x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 0.j
         grd_truths.append(x_true)
+
+        # cancer cell
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = Image.open('ISIC_0000004_cancer.jpg')
@@ -121,6 +127,7 @@ class setUpImage:
         grd_truths.append(x_true)
         
         #complex cameraman
+
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = ski.img_as_float(ski.data.camera())
         img_res = ski.transform.resize(img, (self.Nx, self.Ny))
@@ -133,6 +140,7 @@ class setUpImage:
         grd_truths.append(x_true)
 
         #real cameraman
+
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = ski.img_as_float(ski.data.camera())
         img_res = ski.transform.resize(img, (self.Nx, self.Ny))
@@ -145,6 +153,7 @@ class setUpImage:
         grd_truths.append(x_true)
 
         # cameraman
+
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         image = imageio.imread('cameraman.png', mode='F')
         image = np.array(image)
@@ -154,9 +163,11 @@ class setUpImage:
         # x_true = np.rot90(x_true, -1)
         # x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
-
+        
         #x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = get_phantom(int((1-2*bord)*self.Nx)) + get_phantom(int((1-2*bord)*self.Nx)) * 1.j
+        
         #complex shepp logan
+
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = get_phantom(self.Nx)
         img_res = cv2.resize(img.real, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
@@ -167,6 +178,7 @@ class setUpImage:
         grd_truths.append(x_true)
 
         #real shepp logan
+
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = get_phantom(self.Nx)
         img_res = cv2.resize(img.real, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
@@ -175,6 +187,8 @@ class setUpImage:
         # x_true = np.rot90(x_true, -1)
         # x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
+
+        #ascent
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         image = scipy.datasets.ascent().astype('complex').reshape((512, 512)) #resize((int((1-2*bord)*self.Nx)*int((1-2*bord)*self.Ny))) #.
@@ -196,6 +210,7 @@ class setUpImage:
         #x_true *= mask 
         #grd_truths.append(x_true)
 
+        # a single centered dot
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         grd_truths.append(x_true)
