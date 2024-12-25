@@ -140,8 +140,24 @@ Surprisingly, like HIO, RSRM stagnates around 10-3 even after 15k iterations. RS
 Meanwhile, RAAR ( = RMRS ) did attain 10-5
 
 6-
-For inconsistency, I thought a single dot image (leading to constant 1 magnitudes ) corrupted by a strong noise, would do. Quite an exception.
+For inconsistency, I thought a single dot image (leading to constant 1 magnitudes ) corrupted by a strong noise, would do. Quite a deception.
 
 Challenges: 
 
 -Display takes too long
+
+---------------------------------------------------------------------------------
+
+Outlook:
+
+
+-prove fix point theorem
+
+-implement HPR
+
+-show weak convergence for nonexpansive mappings
+
+
+Observations:
+
+-Non convex analysis: If the constraint set is not convex, the projection can be expansive 
