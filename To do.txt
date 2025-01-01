@@ -150,6 +150,7 @@ Challenges:
 
 Outlook:
 
+-implement method from article 'construction of fixed points...' page 199. Strong convergence in the limit of 'regularizers' is expected. 
 
 -prove fix point theorem
 
