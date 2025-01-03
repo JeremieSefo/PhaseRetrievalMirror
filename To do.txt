@@ -162,3 +162,7 @@ Outlook:
 Observations:
 
 -Non convex analysis: If the constraint set is not convex, the projection can be expansive 
+
+- The feasible set C ( norm(x) <= measurement + epsilon ) is actually a bounded convex and closed subset of L2. 
+The update operator T would map C into itself if a norm-preserving operator, like the fourier transform is used.
+The convex theory could then justify our (good) numerical results.   
