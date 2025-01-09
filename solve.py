@@ -179,6 +179,45 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)  
+    if Algo == 'Poisson-DRS + TV1': #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
+                               #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A.
+        (rho, alpha) = rho_Gau_Poi[1] ############## rho = 0 gives AAR ##################
+        for k in range(maxiter):
+      
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten()
+
+            Y = (Af(x.flatten())).flatten() # * mask.reshape((n,)) (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            
+            RX_Y = 2 * Y - X
+
+
+            Z = ( (-1) * (rho/(2*(rho + 2))) * np.linalg.norm(RX_Y) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.linalg.norm(RX_Y)**2 + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
+            
+            #X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)
+            X = (X) + 2 * alpha * (Z - Y) #alternative
+            x = A_pinv(X) #(ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
+                                                 #But for noiseless measurements, it does help getting the right scale
+
+            #'''
+            ########## TV Regularizaton ####################
+            y_real = space.element(x.real.reshape(mask.shape))
+            y_imag = space.element(x.imag.reshape(mask.shape))
+            xr = x0
+            xi = x0
+            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'no') 
+            TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'no') 
+            lincomb = odl.LinCombOperator(space, 1, 1.j)
+            XX = odl.ProductSpace(space, space)
+            xx = XX.element([xr, xi])
+            x = space.element(x.reshape(mask.shape))
+            lincomb(xx, out = x) 
+            x = op(x)
+            x = x.__array__()
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k)  
    
     if Algo == 'Gaussian-DRS': #rho = 0 boils down to AAR. Other values of rho converge slowly and ressemble error reduction, the more rho gets to 1
                                
@@ -204,7 +243,8 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             if k % 100 == 0: 
                   print('iteration k', k) 
 
-    if Algo == 'Gaussian-DRS + TV': #rho = 0 boils down to AAR. Other values of rho converge slowly and ressemble error reduction, the more rho gets to 1
+    if Algo == 'Gaussian-DRS + TV': #support in TV
+         #rho = 0 boils down to AAR. Other values of rho converge slowly and ressemble error reduction, the more rho gets to 1
                                
                                #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A. Though A here is unital
         (rho, alpha) = rho_Gau_Poi[0]
@@ -248,7 +288,8 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             if k % 100 == 0: 
                   print('iteration k', k)  
   
-    if Algo == 'Gaussian-DRS + TV1': #rho = 0 boils down to AAR. Other values of rho converge slowly and ressemble error reduction, the more rho gets to 1
+    if Algo == 'Gaussian-DRS + TV1': 
+        #rho = 0 boils down to AAR. Other values of rho converge slowly and ressemble error reduction, the more rho gets to 1
                                
                                #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A. Though A here is unital
         (rho, alpha) = rho_Gau_Poi[0]

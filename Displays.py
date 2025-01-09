@@ -9,7 +9,7 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Al
     
     op = odl.FlatteningOperator(space)
 
-    fig = plt.figure(figsize=(28,12))
+    fig = plt.figure(figsize=(32,32))
     axs00 = plt.subplot2grid((5,4), (0,0))
     axs01 = plt.subplot2grid((5,4), (0,1))
     axs02 = plt.subplot2grid((5,4), (0,2))
