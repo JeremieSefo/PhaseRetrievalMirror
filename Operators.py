@@ -112,7 +112,14 @@ def initialise(n, meas, A, type, real, imag, x_true_vect, mask, noise_lvl ):
         #x = x * (noise_lvl/(1. * np.linalg.norm(x)))
     if type == 'close':
         guessNoise  = real * ((1. + 0.j)*np.random.normal(0, 1, size = x_true_vect.shape) + imag  *  (0. + 1.j)* np.random.normal(0, 1, size = x_true_vect.shape))
-        x = x_true_vect  + (noise_lvl/(1. * np.linalg.norm(guessNoise)))*guessNoise
+
+        guessNoise *= (1.)/np.linalg.norm(guessNoise)
+        
+        noise_strength =  (noise_lvl) * np.linalg.norm(x_true_vect)
+        guessNoise *= (noise_strength)
+
+        x = x_true_vect  + guessNoise
+        
     #x = (2 + 3j) * np.ones(x_true_vect.shape)
     return x
 

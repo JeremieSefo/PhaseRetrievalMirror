@@ -8,9 +8,10 @@ from numpy.fft import fftn, ifftn, fftshift, ifftshift
 
 
 
-def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxiter, x, x_true_vect, IO_OO_HIO_beta, RAAR_beta, TvIter, TvAlpha, rho_Gau_Poi ):
-
-    RAAR_beta = RAAR_beta[0]
+def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxiter, x, x_true_vect, IO_OO_HIO_beta, RAAR_AAR_beta, TvIter, TvAlpha, rho_Gau_Poi ):
+    
+    AAR_lambda = RAAR_AAR_beta[1]
+    RAAR_beta = RAAR_AAR_beta[0]
     IO_beta = IO_OO_HIO_beta[0]
     OO_beta = IO_OO_HIO_beta[1]
     HIO_beta = IO_OO_HIO_beta[2]
@@ -385,8 +386,10 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             x_new = A_pinv(R_M_X)  # (ifftn(R_M_X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten() #back into object domain
             
             r_s_R_M_x = 2 * x_new * mask.reshape((n,)) - x_new # reflexion for support projection
-            x = .5 * x + .5 *  r_s_R_M_x
+            x = AAR_lambda * x + (1 - AAR_lambda) *  r_s_R_M_x
             
+            #x = A_pinv((meas**(0.5)) * np.exp(1j* np.angle((Af(x)).flatten()))) #(Af(x)) should satisfies both constraints according to the convex theory. 
+                                                                                         # Simulations show convexity is necessary
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)

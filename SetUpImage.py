@@ -97,14 +97,34 @@ class setUpImage:
         x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
 
-        # ring of Gaussians balls 
+        # ring + i disk of Gaussians balls 
 
         image = imageio.imread('ring.png', mode='F')
         image = np.array(image)
         image = cv2.resize(image, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
         image_padded = np.pad(image, (self.Nx - sNx)//2, 'constant')
-        x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 0.j
+        x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 1.j
         grd_truths.append(x_true)
+        # Define the size of the image
+        size = 1000
+        radius = 700
+        # Create a grid of points
+        x = np.linspace(-1, 1, size)
+        y = np.linspace(-1, 1, size)
+        X, Y = np.meshgrid(x, y)
+        # Define the centered disk
+        disk = (X**2 + Y**2) <= (radius / size)**2
+        # Create the image with ones in the disk and zeros outside
+        imagedisk = np.zeros((size, size))
+        imagedisk[disk] = 1
+        image = cv2.resize(imagedisk, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        imagedisk_padded = np.pad(image, (self.Nx - sNx)//2, 'constant')
+
+        x_true =  image_padded / np.max(np.abs(image_padded)) + (imagedisk_padded / np.max(np.abs(imagedisk_padded))) * 1.j
+        grd_truths.append(x_true)
+
+
+
 
         # cancer cell
 
