@@ -8,13 +8,14 @@ from numpy.fft import fftn, ifftn, fftshift, ifftshift
 
 
 
-def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxiter, x, x_true_vect, IO_OO_HIO_beta, RAAR_AAR_beta, TvIter, TvAlpha, rho_Gau_Poi ):
+def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxiter, x, x_true_vect, IO_OO_HIO_newHIO_beta, RAAR_AAR_beta, TvIter, TvAlpha, rho_Gau_Poi ):
     
     AAR_lambda = RAAR_AAR_beta[1]
     RAAR_beta = RAAR_AAR_beta[0]
-    IO_beta = IO_OO_HIO_beta[0]
-    OO_beta = IO_OO_HIO_beta[1]
-    HIO_beta = IO_OO_HIO_beta[2]
+    IO_beta = IO_OO_HIO_newHIO_beta[0]
+    OO_beta = IO_OO_HIO_newHIO_beta[1]
+    HIO_beta = IO_OO_HIO_newHIO_beta[2]
+    [alph, bet, gamm] = IO_OO_HIO_newHIO_beta[3]
     outsideMask = (1. + 0.j)*np.ones(mask.shape)
     outsideMask = outsideMask - mask
     space = odl.uniform_discr(min_pt=[0, 0], max_pt=mask.shape, shape=mask.shape, dtype='complex64')
@@ -456,7 +457,21 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)
-  
+
+    if Algo == 'new Hybrid Input-Output': ############### beta = 1 gives AAR #################
+
+        for k in range(maxiter):
+
+            x_bef = iterates[-1]
+            PYx = P_M(x)
+            Y_res = alph * P_S(PYx - x)
+            X_res = bet * (P_S(PYx) - PYx)
+            x = Y_res + X_res + gamm * x
+
+
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k)  
     if Algo == 'Hybrid Input-Output': ############### beta = 1 gives AAR #################
 
         for k in range(maxiter):

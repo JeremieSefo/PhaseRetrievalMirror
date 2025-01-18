@@ -168,3 +168,16 @@ The update operator T would map C into itself if a norm-preserving operator, lik
 The convex theory could then justify our (good) numerical results.   
 
 -If T is compact, convergence of T_{\lambda} happens in norm
+
+
+----------------------------------------------------------------------------------
+
+Outlook:
+
+-
+
+
+Observations:
+
+-real and symmetric images have 0 phase in Fourier space. They are well reconstructed because I chosed to project 0 as b, i.e. a number with phase 0. 
+In principle, any other complex number on the circle of radius b is a projection of 0 onto the Fourier amplitudes constraint set. 
