@@ -15,9 +15,13 @@ class gauss_noisy_meas(noisy_meas):
         self.z = self.model(self.x_true)
         #print('we are in')
         self.noise = (1. + 0.j) * np.abs( np.random.normal(loc = 0, scale= 1, size = (self.z).shape)) #scale = self.noise_lvl
-        self.noise *= self.noise_lvl/np.linalg.norm(self.noise)
-        self.synt_meas = self.z * np.conjugate(self.z) + (1. + 0.j) * self.noise
-        #print("self.z", self.z)
+        #self.noise *= self.noise_lvl/np.linalg.norm(self.noise)
+        self.noise *= (1.)/np.linalg.norm(self.noise)
+        
+        self.noise_strength =  (self.noise_lvl**(1)) * np.linalg.norm(np.abs(self.z)**2)
+        self.noise *= (self.noise_strength)
+
+        self.synt_meas = self.z * np.conjugate(self.z) + (1. + 0.j) * self.noise 
         return self.synt_meas, self.noise
 
 class poiss_noisy_meas(noisy_meas):
@@ -29,7 +33,7 @@ class poiss_noisy_meas(noisy_meas):
         #self.noise *= (self.noise_lvl)/np.linalg.norm(self.noise)
         self.noise *= (1.)/np.linalg.norm(self.noise)
         
-        self.noise_strength =  (self.noise_lvl**(0.5)) * self.z * np.conjugate(self.z)
+        self.noise_strength =  (self.noise_lvl**(1)) * np.linalg.norm(np.abs(self.z)**2)
         self.noise *= (self.noise_strength)
 
         self.synt_meas = self.z * np.conjugate(self.z) + (1. + 0.j) * self.noise 
