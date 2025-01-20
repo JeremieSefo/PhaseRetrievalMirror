@@ -181,3 +181,15 @@ Observations:
 
 -real and symmetric images have 0 phase in Fourier space. They are well reconstructed because I chosed to project 0 as b, i.e. a number with phase 0. 
 In principle, any other complex number on the circle of radius b is a projection of 0 onto the Fourier amplitudes constraint set. 
+
+-An aobject diameter slightly less than half the grid length improves significatively the reconstuction (even with noise)
+
+-oversampling in Fourier sapce (which amounts in 0-padding in object space) is crucial for reconstruction. 
+Only then, do we have enough information on the signal to recover it.
+
+
+Challenges: 
+
+-Is random noise (present at high frequencies) appropriate? Have some proportionality. It is important to improve noisy reconstruction
+The larger the object's support, the less low frequencies are being sampled and the more pronounced is the Dirac pic at the origin, giving less strength to the noise.
+

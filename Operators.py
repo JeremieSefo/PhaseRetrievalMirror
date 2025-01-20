@@ -119,7 +119,6 @@ def initialise(n, meas, A, type, real, imag, x_true_vect, mask, noise_lvl ):
         guessNoise *= (noise_strength)
 
         x = x_true_vect  + guessNoise
-        
     #x = (2 + 3j) * np.ones(x_true_vect.shape)
     return x
 
