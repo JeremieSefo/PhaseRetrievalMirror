@@ -97,6 +97,16 @@ class setUpImage:
         x_true = np.rot90(x_true, -1)
         grd_truths.append(x_true)
 
+        # ring + 0 i  Gaussians balls 
+
+        image = imageio.imread('ring.png', mode='F')
+        image = np.array(image)
+        image = cv2.resize(image, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        image_padded = np.pad(image, (self.Nx - sNx)//2, 'constant')
+        x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 0.j
+        grd_truths.append(x_true)
+
+
         # ring + i disk of Gaussians balls 
 
         image = imageio.imread('ring.png', mode='F')

@@ -1,6 +1,7 @@
 import numpy as np
 import odl
 import scipy.misc
+import Operators as op
 from Operators import soft_shrinkage
 from TVRegularise import TVregularize
 from scipy.signal import convolve2d
@@ -8,7 +9,7 @@ from numpy.fft import fftn, ifftn, fftshift, ifftshift
 
 
 
-def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxiter, x, x_true_vect, IO_OO_HIO_newHIO_beta, RAAR_AAR_beta, TvIter, TvAlpha, rho_Gau_Poi ):
+def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxiter, x, x_true_vect, IO_OO_HIO_newHIO_beta, RAAR_AAR_beta, TvIter, TvAlpha, rho_Gau_Poi ):
     
     AAR_lambda = RAAR_AAR_beta[1]
     RAAR_beta = RAAR_AAR_beta[0]
@@ -48,7 +49,7 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
 
     if Algo == 'real mirror' or Algo == 'complex mirror':
         x = P_S(x)
-        
+        L = 1 * op.smoothnessPara_L(Af.Matrix, noise)
         if Algo == 'real mirror': a, b = 1., 0.
         if Algo == 'complex mirror': a, b = 0., 1.
         for k in range(maxiter):
@@ -158,7 +159,9 @@ def phase_retrieval(L, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, maxit
             xr = x0
             xi = x0
             TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'yes') 
-            TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
+            if y_imag != 0:
+                TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
+            
             lincomb = odl.LinCombOperator(space, 1, 1.j)
             XX = odl.ProductSpace(space, space)
             xx = XX.element([xr, xi])
