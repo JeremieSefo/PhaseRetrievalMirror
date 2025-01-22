@@ -26,15 +26,16 @@ def phase_retrie_plots(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Al
     
     # Loop over test images and the algorithms 
     for i, algo in enumerate(Algos):
-        x_sol = op.inverse(X_sols[i][-1])
-        plot_image(axs[i + 1], x_sol.real, f'Real Part - {algo}', vmin=np.min(x_sol.real), vmax=np.max(x_sol.real))
-        plot_image(axs[i + 5], x_sol.imag, f'Imaginary Part - {algo}', vmin=np.min(x_sol.imag), vmax=np.max(x_sol.imag))
         
         #correct global phase : close form of the 1D optimizer
         lambd = np.vdot( X_sols[i][-1], x)
         phi = np.arctan(lambd.imag/lambd.real)
         X_sols[i][-1] = np.exp(phi * 1.j) * X_sols[i][-1]
 
+        x_sol = op.inverse(X_sols[i][-1])
+        plot_image(axs[i + 1], x_sol.real, f'Real Part - {algo}', vmin=np.min(x_sol.real), vmax=np.max(x_sol.real))
+        plot_image(axs[i + 5], x_sol.imag, f'Imaginary Part - {algo}', vmin=np.min(x_sol.imag), vmax=np.max(x_sol.imag))
+        
         #compute errors
         f_x_sols = [map.f(x) for x in X_sols[i]]
         axs[i + 9].plot(np.arange(maxiter + 1), [(meas - np.abs(A(x).flatten())**2) / (2 * np.sqrt(m)) for x in X_sols[i]])
