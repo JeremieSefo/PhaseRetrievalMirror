@@ -103,12 +103,35 @@ def spectInit(meas, A):
     x0 = x0 * (lamda/np.linalg.norm(x0))
     return [x0, eigenval.real, eigenvect.real]
 
+def generate_multivariate_gaussian(mus, sigma, size=1):
+    """
+    Generate an instance of a multivariate Poisson distribution.
+
+    Parameters:
+    mus (list or array): Means of the individual Poisson distributions.
+    size (int): Number of samples to generate.
+
+    Returns:
+    np.ndarray: An array of shape (size, len(mus)) representing the samples.
+    """
+    # Ensure lambdas is a numpy array
+    mus = np.array(mus)
+    # Generate samples for each Poisson distribution
+    samples = ([np.random.normal(mu, sigma, size) for mu in mus]) #[np.random.poisson(lam, size) for lam in lambdas]
+    
+    # Combine samples into a multivariate array
+    multivariate_samples = np.stack(samples, axis=-1)
+    return multivariate_samples[0]
 
 def initialise(n, meas, A, type, real, imag, x_true_vect, mask, noise_lvl ):
     if type == 'spectral':
         x, eigenval_real, eigenvect_real = spectInit(meas, A)
     if type == 'Gaussian':
-        x = real * ((1. + 0.j)*np.random.normal(0.5, 0.25, size = (n, ) )) + imag * (0. + 1.j)*np.random.normal(0.5, 0.25, size = (n, ) )
+        mus = x_true_vect
+        num_samples = 1
+        #x = real * generate_multivariate_gaussian(mus.real, noise_lvl, num_samples) +  imag * 1.j * generate_multivariate_gaussian(mus.imag, noise_lvl, num_samples)
+
+        x = real * ((1. + 0.j)*np.random.normal(0.75, noise_lvl, size = (n, ) )) + imag * (0. + 1.j)*np.random.normal(0.75, noise_lvl, size = (n, ) )
         #x = x * (noise_lvl/(1. * np.linalg.norm(x)))
     if type == 'close':
         guessNoise  = real * ((1. + 0.j)*np.random.normal(0, 1, size = x_true_vect.shape) + imag  *  (0. + 1.j)* np.random.normal(0, 1, size = x_true_vect.shape))
@@ -119,7 +142,9 @@ def initialise(n, meas, A, type, real, imag, x_true_vect, mask, noise_lvl ):
         guessNoise *= (noise_strength)
 
         x = x_true_vect  + guessNoise
-    NSR = np.linalg.norm(x -x_true_vect) / np.linalg.norm(x_true_vect)
+    indices = np.logical_not(mask.reshape((n,)))
+    x[indices] = 0
+    NSR = np.linalg.norm(x - x_true_vect) / np.linalg.norm(x_true_vect)
     return x, NSR
 
 def soft_shrinkage(x, lamda):

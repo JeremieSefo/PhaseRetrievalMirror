@@ -16,10 +16,14 @@ class support(odl.solvers.Functional):
         self.X = X
         super(support, self).__init__(self.X)
     def __call__(self, x):
-        M = (1. + 0.j) * np.ones(self.mask.shape)
-        M -= self.mask
+        #M = (1. + 0.j) * np.ones(self.mask.shape)
+        #M -= self.mask
+        #indices = np.logical_not(self.mask)
+        ##oper = odl.FlatteningOperator(self.X)
+        ##x = oper(x) #flattening
+        x[self.mask != 0.] = 0. 
         func = odl.solvers.IndicatorZero(self.X)
-        return func(x*M)
+        return func(x) #func(x*M)
     '''
     def proximal(self, x):
         """Return the proximal factory of the functional.

@@ -193,3 +193,69 @@ Challenges:
 -Is random noise (present at high frequencies) appropriate? Have some proportionality. It helps improve noisy reconstruction
 The larger the object's support, the less low frequencies are being sampled and the more pronounced is the Dirac pic at the origin, giving less strength to the noise.
 
+
+----------------------------------------------------------------------------------
+
+Outlook:
+-still some work to improve Poisson DRS in OS (for local converge with noiseless Fourier data)
+-test exact support (ellipse) for sheep logan, to avoid translations
+-include M_TVS in RAAR
+-test RAAR and include TV
+-Don't correct phase for Poisson and observe
+
+Observations:
+-HIO retrieves reasonable images from Fourier data after 1000 iterations, HIO = AAR RSRM, but not AAR RMRS.  
+-With Fourier data, one achieves only local convergence 
+- TV1 and or Poisson DRS in OS are my best solvers
+-both Peaceman-Rachford don't converge, but oscillate after finding the main image features
+-Peaceman-Rachford RMRS (even RAAR,..., but not AAR RSRM) iterates all seem to satisfy the support constraint, in the video (, except the last ierate). why? 
+This was only true of the projection P_M of a fixed point.
+An isolated test case did not show the same observation. Why something else in the video?
+
+-Is there even hope to reconstruct from Fourier data? 
+Very tight support constraint is needed to capture sharp edges. 
+Fourier data has no information at high frequencies. Thus, we can only reconstruct smooth images from Fourier data.
+Added to that, the FFT is a finite approximation of the FT. High frequencies are left out. For e.g. the FFT is not faithful. 
+Together with numerical errors
+
+-It is crucial to first tigthen the support in order to exploit available high frequencies data
+-(random A) Gaussian DRS + M_TVS handles huge (Poisson) noise better (converges faster) than Poison DRS + M_TVS
+-TV1 handles the noise better than other TVS, at least when A is randomly sampled
+-they do find a solution to the noiseless problem. 
+But with noisy data, satisfying the support constraint seems to prohibit the error to go to zero : Inconsistency. 
+They get stucked at good local minima, but not at the solution, not even after initializing locally. 
+In fact, when initialized close to the true solution, they stagnate after only few steps. 
+The hope was to see DRS outperform AAR in presence of noise. The truth is, The paper only claimed boundedness of the iterates.
+
+-Poisson DRS in OS should = Poisson DRS because A is isometric. It commutes with the projection, since the letter is a minimizer (in L2?)
+In reality, Poisson DRS in OS outperforms
+-last iterate of Poisson DRS in OS violates the mask. Same and only issue with Poisson DRS. Now, everyone. Further project onto S before plotting
+-RMRS performs better than RSRM
+-RSRM stagnates near true solution
+-Spectral init gives no initial point, missing values. Fix it
+-Poisson DRS diverges even locally, while AAR almost does not improve. Fix Poisson. But AAR M_TVS improves
+-Gaussian  DRS generally converges faster
+
+Challenges: 
+-Is AAR really akin HIO? AAR tends to produce iterates close to the support constraint set and performs bad. same for DRS
+-memory issue for 128*128 images, 
+to store random matrix A:  Unable to allocate 4.13 GiB for an array with shape (16641, 16641) and data type complex128
+to plot (Fourier) iterates : Unable to allocate 15.6 KiB for an array with shape (1001,) and data type complex128
+
+-Git repo: I can't push the changes anymore
+
+----------------------------------------------------------------------------------
+
+Outlook:
+
+-
+
+
+Observations:
+
+-DFT uses (equidistant) sample values x[n], n = 0, ..., N-1 of signal x(t). 
+Sampling can introduce aliasing if the sampling rate is smaller than twice the maximum frequency contained in x(t).
+
+Challenges: 
+
+-

@@ -8,10 +8,12 @@ def phase_retrie_plots_alternate(idx, grd_truths, X_sols, map, A, meas, space, A
     x_tru = grd_truths[idx]
     K = np.arange(maxiter)
     f_x_sols = [map.f(x) for x in X_sols]
+    m = len(A(x_tru.flatten()).flatten())
 
     fig, axs = plt.subplots(5, 4, figsize=(32, 32))
     axs = axs.flatten()
-
+    axs[8].axis('off')
+    axs[16].axis('off')
     # Function to plot images
     def plot_image(ax, image, title, vmin, vmax):
         im = ax.imshow(image, cmap='gray', vmin=vmin, vmax=vmax, origin='lower')
@@ -29,10 +31,10 @@ def phase_retrie_plots_alternate(idx, grd_truths, X_sols, map, A, meas, space, A
     plot_image(axs[5], x.imag, 'Imaginary Part - '+Algos[0]+' alternate with '+Algos[1], np.min(x.imag), np.max(x.imag))
 
     # Plot errors
-    axs[9].plot(K, [np.linalg.norm(meas - np.abs(A(x)).flatten()) for x in X_sols])
-    axs[9].set_title('Fourier Magnitude Pixels Error')
-    axs[13].loglog(K, f_x_sols)
-    axs[13].set_title('Fourier error')
+    axs[13].plot(K, [(meas - np.abs(A(x).flatten())**2) / (2 * np.sqrt(m)) for x in X_sols])
+    axs[13].set_title('Fourier Magnitude Pixels Error')
+    axs[9].loglog(K, f_x_sols)
+    axs[9].set_title('Fourier error')
     axs[17].loglog(K, [np.linalg.norm(x-x_tru.flatten()) for x in X_sols])
     axs[17].set_title('Object domain error')
 

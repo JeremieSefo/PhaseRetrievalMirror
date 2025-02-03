@@ -32,6 +32,7 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
     
     beta = .7
     def P_S(x):
+        x = x.copy()
         indices = np.logical_not(mask.reshape((n,)))
         x[indices] = 0
         return x #* mask.reshape((n,))
@@ -128,10 +129,10 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
             (Qx, Qy) = X.shape
             X = X.flatten()
-            #X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
-            Y = Af((x * mask.reshape((n,)))).flatten() # (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            Y = Af(P_S(x)).flatten() # (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
             RX_Y = 2 * Y - X
-            Z = ( (-1) * (rho/(2*(rho + 2))) * np.linalg.norm(RX_Y) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.linalg.norm(RX_Y)**2 + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
+            Z = ( (-1) * (rho/(2*(rho + 2))) * np.abs(RX_Y) + (1/(2)) * ( ( ((rho**2/((rho + 2)**2)) * np.abs(RX_Y)**2 
+                                                                    + ((8)/(rho + 2)) * meas) )**(0.5) ) ) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
             
             #X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z) 
             X = (X) + 2 * alpha * (Z - Y) #alternative
@@ -141,8 +142,30 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)  
-  
-    if Algo == 'Poisson-DRS + TV': #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
+    if Algo == 'Poisson-DRS in OS': # object space 
+                               #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
+                               #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A.
+        (rho, alpha) = rho_Gau_Poi[1] ############## rho = 0 gives AAR ##################
+        for k in range(maxiter):
+        
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten()
+            y = (P_S(x))#.flatten() # (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            r_S_x = 2 * y - x 
+            RX_Y = Af(r_S_x).flatten()
+            Z = ( (-1) * (rho/(2*(rho + 2))) * np.abs(RX_Y) + (1/(2)) * ( ( ((rho**2/((rho + 2)**2)) * np.abs(RX_Y)**2 
+                                                                    + ((8)/(rho + 2)) * meas) )**(0.5) ) ) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
+            z = A_pinv(Z) #crucial difference
+            #X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z) 
+            x = (x) + 2 * alpha * (z - y) #alternative
+
+            #x = A_pinv(X) #(ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
+                                                       #But for noiseless measurements, it does help getting the right scale
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k)  
+    if Algo == 'Poisson-DRS + TVS_M': #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
                                #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A.
         (rho, alpha) = rho_Gau_Poi[1] ############## rho = 0 gives AAR ##################
         for k in range(maxiter):
@@ -151,7 +174,10 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             (Qx, Qy) = X.shape
             X = X.flatten()
 
-            
+            Y = ( (-1) * (rho/(2*(rho + 2))) * np.abs(X) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.abs(X)**2 
+                                                                        + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(X)) )#amplitude-based Gaussian loss L
+            R_M_X = 2 * Y - X
+            x = A_pinv(R_M_X)
             #'''
             ########## TV Regularizaton ####################
             y_real = space.element(x.real.reshape(mask.shape))
@@ -159,7 +185,7 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             xr = x0
             xi = x0
             TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'yes') 
-            if y_imag != 0:
+            if np.linalg.norm(y_imag) > 1e-3:
                 TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
             
             lincomb = odl.LinCombOperator(space, 1, 1.j)
@@ -170,16 +196,132 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             x = op(x)
             x = x.__array__()
 
-            Y = (Af(x.flatten())).flatten() # * mask.reshape((n,)) (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            Z = (Af(x.flatten())).flatten()
+            X = (X) + 2 * alpha * (Z - Y) #alternative
+            x = A_pinv(X) #(ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
+                                                 #But for noiseless measurements, it does help getting the right scale
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k) 
+    if Algo == 'Poisson-DRS in OS + TVS_M': #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
+                               #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A.
+        (rho, alpha) = rho_Gau_Poi[1] ############## rho = 0 gives AAR ##################
+        for k in range(maxiter):
+      
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten()
+
+            Y = ( (-1) * (rho/(2*(rho + 2))) * np.abs(X) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.abs(X)**2 
+                                                                        + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(X)) )#amplitude-based Gaussian loss L
+            #R_M_X = 2 * Y - X
+            y = A_pinv(Y)
+            r_M_x = 2 * y - x
+            x_bef = x
+            x = r_M_x
+            #x = A_pinv(R_M_X)
+            #'''
+            ########## TV Regularizaton ####################
+            y_real = space.element(x.real.reshape(mask.shape))
+            y_imag = space.element(x.imag.reshape(mask.shape))
+            xr = x0
+            xi = x0
+            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'yes') 
+            if np.linalg.norm(y_imag) > 1e-3:
+                TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
             
+            lincomb = odl.LinCombOperator(space, 1, 1.j)
+            XX = odl.ProductSpace(space, space)
+            xx = XX.element([xr, xi])
+            x = space.element(x.reshape(mask.shape))
+            lincomb(xx, out = x) 
+            x = op(x)
+            x = x.__array__()
+
+            #Z = (Af(x.flatten())).flatten()
+            z = x
+            x = x_bef + 2 * alpha * (z - y)
+            #X = (X) + 2 * alpha * (Z - Y) #alternative
+            #x = A_pinv(X) #(ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
+                                                 #But for noiseless measurements, it does help getting the right scale
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k) 
+    if Algo == 'Poisson-DRS + M_TVS': #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
+                               #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A.
+        (rho, alpha) = rho_Gau_Poi[1] ############## rho = 0 gives AAR ##################
+        for k in range(maxiter):
+      
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten()
+            #'''
+            ########## TV Regularizaton ####################
+            y_real = space.element(x.real.reshape(mask.shape))
+            y_imag = space.element(x.imag.reshape(mask.shape))
+            xr = x0
+            xi = x0
+            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'yes') 
+            if np.linalg.norm(y_imag) > 1e-3:
+                TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
+            
+            lincomb = odl.LinCombOperator(space, 1, 1.j)
+            XX = odl.ProductSpace(space, space)
+            xx = XX.element([xr, xi])
+            x = space.element(x.reshape(mask.shape))
+            lincomb(xx, out = x) 
+            x = op(x)
+            x = x.__array__()
+
+            Y = (Af(x.flatten())).flatten() # * mask.reshape((n,)) (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()            
             RX_Y = 2 * Y - X
-
-
-            Z = ( (-1) * (rho/(2*(rho + 2))) * np.linalg.norm(RX_Y) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.linalg.norm(RX_Y)**2 + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
+            Z = ( (-1) * (rho/(2*(rho + 2))) * np.abs(RX_Y) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.abs(RX_Y)**2 
+                                                                           + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
             
             #X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)
             X = (X) + 2 * alpha * (Z - Y) #alternative
             x = A_pinv(X) #(ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
+                                                 #But for noiseless measurements, it does help getting the right scale
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k)  
+    if Algo == 'Poisson-DRS in OS + M_TVS': #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
+                               #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A.
+        (rho, alpha) = rho_Gau_Poi[1] ############## rho = 0 gives AAR ##################
+        for k in range(maxiter):
+            x_bef = x
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten()
+            #'''
+            ########## TV Regularizaton ####################
+            y_real = space.element(x.real.reshape(mask.shape))
+            y_imag = space.element(x.imag.reshape(mask.shape))
+            xr = x0
+            xi = x0
+            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'yes') 
+            if np.linalg.norm(y_imag) > 1e-3:
+                TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
+            
+            lincomb = odl.LinCombOperator(space, 1, 1.j)
+            XX = odl.ProductSpace(space, space)
+            xx = XX.element([xr, xi])
+            x = space.element(x.reshape(mask.shape))
+            lincomb(xx, out = x) 
+            x = op(x)
+            x = x.__array__()
+            
+            y = x
+            r_s_x = 2 *  y - x_bef
+            #Y = (Af(x.flatten())).flatten() # * mask.reshape((n,)) (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()            
+            RX_Y = (Af(r_s_x.flatten())).flatten()
+            Z = ( (-1) * (rho/(2*(rho + 2))) * np.abs(RX_Y) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.abs(RX_Y)**2 
+                                                                           + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
+            z = A_pinv(Z)
+            #X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)
+            #X = (X) + 2 * alpha * (Z - Y) #alternative
+            x = x_bef + 2 * alpha * (z - y)
+            #x = A_pinv(X) #(ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
                                                  #But for noiseless measurements, it does help getting the right scale
             iterates.append(x)
             if k % 100 == 0: 
@@ -193,12 +335,12 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             (Qx, Qy) = X.shape
             X = X.flatten()
 
-            Y = (Af(x.flatten())).flatten() # * mask.reshape((n,)) (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            Y = (Af(P_S(x))).flatten() # * mask.reshape((n,)) (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
             
             RX_Y = 2 * Y - X
 
 
-            Z = ( (-1) * (rho/(2*(rho + 2))) * np.linalg.norm(RX_Y) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.linalg.norm(RX_Y)**2 + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
+            Z = ( (-1) * (rho/(2*(rho + 2))) * np.abs(RX_Y) + (1/(2)) * ((((rho**2/((rho + 2)**2)) * np.abs(RX_Y)**2 + ((8)/(rho + 2)) * meas))**(0.5))) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
             
             #X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)
             X = (X) + 2 * alpha * (Z - Y) #alternative
@@ -223,7 +365,43 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)  
-   
+    if Algo == 'Poisson-DRS in OS + TV1': #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
+                               #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
+                               #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A.
+        (rho, alpha) = rho_Gau_Poi[1] ############## rho = 0 gives AAR ##################
+        for k in range(maxiter):
+        
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten()
+            y = (P_S(x))#.flatten() # (fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            r_S_x = 2 * y - x 
+            RX_Y = Af(r_S_x).flatten()
+            Z = ( (-1) * (rho/(2*(rho + 2))) * np.abs(RX_Y) + (1/(2)) * ( ( ((rho**2/((rho + 2)**2)) * np.abs(RX_Y)**2 
+                                                                    + ((8)/(rho + 2)) * meas) )**(0.5) ) ) * ( np.exp(1j* np.angle(RX_Y)) )#amplitude-based Gaussian loss L
+            z = A_pinv(Z) #crucial difference
+            #X = (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z) 
+            x = (x) + 2 * alpha * (z - y) #alternative
+                                                 #But for noiseless measurements, it does help getting the right scale
+
+            #'''
+            ########## TV Regularizaton ####################
+            y_real = space.element(x.real.reshape(mask.shape))
+            y_imag = space.element(x.imag.reshape(mask.shape))
+            xr = x0
+            xi = x0
+            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'no') 
+            TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'no') 
+            lincomb = odl.LinCombOperator(space, 1, 1.j)
+            XX = odl.ProductSpace(space, space)
+            xx = XX.element([xr, xi])
+            x = space.element(x.reshape(mask.shape))
+            lincomb(xx, out = x) 
+            x = op(x)
+            x = x.__array__()
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k)   
     if Algo == 'Gaussian-DRS': #rho = 0 boils down to AAR. Other values of rho converge slowly and ressemble error reduction, the more rho gets to 1
                                
                                #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A. Though A here is unital
@@ -236,7 +414,7 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             X = X.flatten()
             X_save = X
             #X = (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
-            Y = Af((x * mask.reshape((n,)))).flatten() #(fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            Y = Af(P_S(x)).flatten() #(fftn((x * mask.reshape((n,))).reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
             RX_Y = 2 * Y - X
             Z = (1) * (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(RX_Y)) + (rho/(rho + 1)) * RX_Y #amplitude-based Gaussian loss L. This is sign dependent
             X = (X) + 2 * alpha * (Z - Y) # (1/(rho + 1)) * (X) + ((rho - 1)/(rho + 1)) * Y + (1/(rho + 1)) * (Z)   #bad if prho >0        # (X) + 2 * alpha * (Z - Y) # performs better IEEE
@@ -247,8 +425,44 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k) 
+    if Algo == 'Gaussian-DRS + TVS_M': #In comparison to AAR, DRS allows a relaxation parameter on the magnitudes constraints, using proximal operators
+                               #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A.
+        (rho, alpha) = rho_Gau_Poi[1] ############## rho = 0 gives AAR ##################
+        for k in range(maxiter):
+      
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten()
 
-    if Algo == 'Gaussian-DRS + TV': #support in TV
+            Y = (1) * (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(X)) + (rho/(rho + 1)) * X #amplitude-based Gaussian loss L. This is sign dependent
+            R_M_X = 2 * Y - X
+            x = A_pinv(R_M_X)
+            #'''
+            ########## TV Regularizaton ####################
+            y_real = space.element(x.real.reshape(mask.shape))
+            y_imag = space.element(x.imag.reshape(mask.shape))
+            xr = x0
+            xi = x0
+            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'yes') 
+            if np.linalg.norm(y_imag) > 1e-3:
+                TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
+            
+            lincomb = odl.LinCombOperator(space, 1, 1.j)
+            XX = odl.ProductSpace(space, space)
+            xx = XX.element([xr, xi])
+            x = space.element(x.reshape(mask.shape))
+            lincomb(xx, out = x) 
+            x = op(x)
+            x = x.__array__()
+
+            Z = (Af(x.flatten())).flatten()
+            X = (X) + 2 * alpha * (Z - Y) #alternative
+            x = A_pinv(X) #(ifftn(X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten()
+                                                 #But for noiseless measurements, it does help getting the right scale
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k) 
+    if Algo == 'Gaussian-DRS + M_TVS': #support in TV
          #rho = 0 boils down to AAR. Other values of rho converge slowly and ressemble error reduction, the more rho gets to 1
                                
                                #pseudoinverse of A discards any vector component which is orthogonal to the range of A, and by so doing annihilates the kernel of A. Though A here is unital
@@ -269,7 +483,8 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             xr = x0
             xi = x0
             TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'yes') 
-            TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
+            if np.linalg.norm(y_imag) > 1e-3:
+                TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
             lincomb = odl.LinCombOperator(space, 1, 1.j)
             XX = odl.ProductSpace(space, space)
             xx = XX.element([xr, xi])
@@ -291,8 +506,7 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
                                                  #But for noiseless measurements, it does help getting the right scale
             iterates.append(x)
             if k % 100 == 0: 
-                  print('iteration k', k)  
-  
+                  print('iteration k', k)                 
     if Algo == 'Gaussian-DRS + TV1': 
         #rho = 0 boils down to AAR. Other values of rho converge slowly and ressemble error reduction, the more rho gets to 1
                                
@@ -307,7 +521,7 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             X_save = X
    
             ############ For Previous TV : comment off line below  ##########################
-            Y = Af((x * mask.reshape((n,)))).flatten() 
+            Y = Af(P_S(x)).flatten() 
             
             RX_Y = 2 * Y - X
             Z = (1) * (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(RX_Y)) + (rho/(rho + 1)) * RX_Y #amplitude-based Gaussian loss L. This is sign dependent
@@ -335,11 +549,20 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             if k % 100 == 0: 
                   print('iteration k', k)  
   
-    if Algo == 'Peaceman-Rachford':
+    if Algo == 'Peaceman-Rachford RSRM':
 
         for k in range(maxiter):
           
             x = R_S( R_M(x) )
+
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k)
+    if Algo == 'Peaceman-Rachford RMRS':
+
+        for k in range(maxiter):
+          
+            x = R_M( R_S(x) )
 
             iterates.append(x)
             if k % 100 == 0: 
@@ -381,15 +604,17 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
            
            ######  x = .5 * x + .5 * R_S( R_M(x) ) ###### also works ########
             #'''
-            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
-            (Qx, Qy) = X.shape
-            X = X.flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
-            P_M_X = (meas**(0.5)) * np.exp(1j* np.angle(X))  #Fourier amplitude fitting
-            R_M_X = 2 * P_M_X - X     
+            #X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            #(Qx, Qy) = X.shape
+            #X = X.flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            #P_M_X = (meas**(0.5)) * np.exp(1j* np.angle(X))  #Fourier amplitude fitting
+            #R_M_X = 2 * P_M_X - X     
             #R_rangeA_R_M_X = R_M_X #A is invertible with inverse A_pinv. So no need for A @ ((A_pinv) @ R_M_X) #proximal point relative to the range of A.    
-            x_new = A_pinv(R_M_X)  # (ifftn(R_M_X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten() #back into object domain
-            
-            r_s_R_M_x = 2 * x_new * mask.reshape((n,)) - x_new # reflexion for support projection
+            #x_new = A_pinv(R_M_X)  # (ifftn(R_M_X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten() #back into object domain
+            x_new = 2 * P_M(x) - x
+            #break
+            #iterates.append(x_new)
+            r_s_R_M_x = 2 * P_S(x_new) - x_new # reflexion for support projection
             x = AAR_lambda * x + (1 - AAR_lambda) *  r_s_R_M_x
             
             #x = A_pinv((meas**(0.5)) * np.exp(1j* np.angle((Af(x)).flatten()))) #(Af(x)) should satisfies both constraints according to the convex theory. 
@@ -397,7 +622,78 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)
-    if Algo == 'Averaged Alternating Reflections RSRM + TV': 
+    if Algo == 'Averaged Alternating Reflections RSRM + TVS_M': 
+                                                   
+        for k in range(maxiter):
+
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+
+            Y = (meas**(0.5)) * np.exp(1j* np.angle(X))  #Fourier amplitude fitting
+            R_M_X = 2 * Y - X     
+            #R_rangeA_R_M_X = R_M_X #A is invertible with inverse A_pinv. So no need for A @ ((A_pinv) @ R_M_X) #proximal point relative to the range of A.    
+            x_bef = A_pinv(R_M_X)  # (ifftn(R_M_X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten() #back into object domain
+            x = x_bef
+            #'''
+            ########## TV Regularizaton ####################
+            y_real = space.element(x.real.reshape(mask.shape))
+            y_imag = space.element(x.imag.reshape(mask.shape))
+            xr = x0
+            xi = x0
+            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'yes') 
+            if np.linalg.norm(y_imag) > 1e-3:
+                TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
+            
+            lincomb = odl.LinCombOperator(space, 1, 1.j)
+            XX = odl.ProductSpace(space, space)
+            xx = XX.element([xr, xi])
+            x = space.element(x.reshape(mask.shape))
+            lincomb(xx, out = x) 
+            x = op(x)
+            x = x.__array__()
+            Z = (Af(x.flatten())).flatten()
+            X = X + Z - Y
+            x = A_pinv(X)
+
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k)
+    if Algo == 'Averaged Alternating Reflections RSRM + M_TVS': #same as 'Averaged Alternating Reflections RMRS + M_TVS'
+                                                   
+        for k in range(maxiter):
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            X = X.flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+
+            #'''
+            ########## TV Regularizaton ####################
+            y_real = space.element(x.real.reshape(mask.shape))
+            y_imag = space.element(x.imag.reshape(mask.shape))
+            xr = x0
+            xi = x0
+            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'yes') 
+            if np.linalg.norm(y_imag) > 1e-3:
+                TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
+            
+            lincomb = odl.LinCombOperator(space, 1, 1.j)
+            XX = odl.ProductSpace(space, space)
+            xx = XX.element([xr, xi])
+            x = space.element(x.reshape(mask.shape))
+            lincomb(xx, out = x) 
+            x = op(x)
+            y = x.__array__()
+
+            Y = Af(y)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            Y = Y.flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            R_S_X = 2 * Y - X 
+            Z = (meas**(0.5)) * np.exp(1j* np.angle(R_S_X))  #Fourier amplitude fitting
+            X = X + Z - Y  
+            x = A_pinv(X) 
+ 
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k) 
+    if Algo == 'Averaged Alternating Reflections RSRM + TV1': 
                                                    
         for k in range(maxiter):
            
@@ -406,12 +702,13 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
             (Qx, Qy) = X.shape
             X = X.flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
-            P_M_X = (meas**(0.5)) * np.exp(1j* np.angle(X))  #Fourier amplitude fitting
-            R_M_X = 2 * P_M_X - X     
+            #P_M_X = (meas**(0.5)) * np.exp(1j* np.angle(X))  #Fourier amplitude fitting
+            x_new = 2 * P_M(x) - x     
             #R_rangeA_R_M_X = R_M_X #A is invertible with inverse A_pinv. So no need for A @ ((A_pinv) @ R_M_X) #proximal point relative to the range of A.    
-            x_new = A_pinv(R_M_X)  # (ifftn(R_M_X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten() #back into object domain
+            #x_new = A_pinv(R_M_X)  # (ifftn(R_M_X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten() #back into object domain
             
-            r_s_R_M_x = 2 * x_new * mask.reshape((n,)) - x_new # reflexion for support projection
+            #r_s_R_M_x = 2 * x_new * mask.reshape((n,)) - x_new # reflexion for support projection
+            r_s_R_M_x = 2 * P_S(x_new) - x_new # reflexion for support projection
             x = .5 * x + .5 *  r_s_R_M_x
            
             ########## TV Regularizaton #################### Please, don't try this at home
@@ -440,13 +737,85 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
         for k in range(maxiter):
            
           
-            x = .5 * x + .5 * R_M( R_S(x) ) # #AAR in object domain with support prior (not range(A) prior), performs worse.
+            x = AAR_lambda * x + (1 - AAR_lambda) * R_M( R_S(x) ) # #AAR in object domain with support prior (not range(A) prior), performs worse.
                                             #One could maybe formulate an equivalent of range(A) prior in the object domain
      
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)
-   
+    if Algo == 'Averaged Alternating Reflections RMRS + M_TVS': 
+                                                   
+        for k in range(maxiter):
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            X = X.flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+
+            #'''
+            ########## TV Regularizaton ####################
+            y_real = space.element(x.real.reshape(mask.shape))
+            y_imag = space.element(x.imag.reshape(mask.shape))
+            xr = x0
+            xi = x0
+            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'yes') 
+            if np.linalg.norm(y_imag) > 1e-3:
+                TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'yes') 
+            
+            lincomb = odl.LinCombOperator(space, 1, 1.j)
+            XX = odl.ProductSpace(space, space)
+            xx = XX.element([xr, xi])
+            x = space.element(x.reshape(mask.shape))
+            lincomb(xx, out = x) 
+            x = op(x)
+            y = x.__array__()
+
+            Y = Af(y)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            Y = Y.flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            R_S_X = 2 * Y - X 
+            Z = (meas**(0.5)) * np.exp(1j* np.angle(R_S_X))  #Fourier amplitude fitting
+            X = X + Z - Y  
+            x = A_pinv(X) 
+ 
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k)    
+    if Algo == 'Averaged Alternating Reflections RMRS + TV1': 
+                                                   
+        for k in range(maxiter):
+           
+           ######  x = .5 * x + .5 * R_S( R_M(x) ) ###### also works ########
+            #'''
+            X = Af(x)#(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho'))#Af(x)
+            (Qx, Qy) = X.shape
+            X = X.flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+
+            #r_s_R_M_x = 2 * x_new * mask.reshape((n,)) - x_new # reflexion for support projection
+            r_s_x = 2 * P_S(x) - x # reflexion for support projection
+
+            #P_M_X = (meas**(0.5)) * np.exp(1j* np.angle(X))  #Fourier amplitude fitting
+            r_m_r_s_x = 2 * P_M(r_s_x) - r_s_x     
+            #R_rangeA_R_M_X = R_M_X #A is invertible with inverse A_pinv. So no need for A @ ((A_pinv) @ R_M_X) #proximal point relative to the range of A.    
+            #x_new = A_pinv(R_M_X)  # (ifftn(R_M_X.reshape((Qx, Qy)), s = mask.shape, norm = 'ortho')).flatten() #back into object domain
+
+            x = .5 * x + .5 *  r_m_r_s_x
+           
+            ########## TV Regularizaton #################### Please, don't try this at home
+            
+            y_real = space.element(x.real.reshape(mask.shape))
+            y_imag = space.element(x.imag.reshape(mask.shape))
+            xr = x0
+            xi = x0
+            TVregularize(y_real, TvAlpha, Mask, xr, space, niter = TvIter, supportPrior = 'no') 
+            TVregularize(y_imag, TvAlpha, Mask, xi, space, niter = TvIter, supportPrior = 'no') 
+            lincomb = odl.LinCombOperator(space, 1, 1.j)
+            XX = odl.ProductSpace(space, space)
+            xx = XX.element([xr, xi])
+            x = space.element(x.reshape(mask.shape))
+            lincomb(xx, out = x) 
+            x = op(x)
+            x = x.__array__()
+  
+            iterates.append(x)
+            if k % 100 == 0: 
+                  print('iteration k', k)
     if Algo == 'RAAR': 
 
         for k in range(maxiter):
@@ -511,10 +880,10 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             #''' ########## HIO in object domain - support prior ##########
 
             x_bef = iterates[-1]
-            X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
-            X = (meas**(0.5)) * np.exp(1j* np.angle(X))               
+            #X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            #X = (meas**(0.5)) * np.exp(1j* np.angle(X))               
             #X = A @ ((A_pinv) @ X)
-            x = A_pinv(X) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            x = P_M(x) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
          
             # indices = np.logical_or(np.logical_and(np.angle(x) < 0, mask.reshape((n,))),  
             #                         np.logical_and(np.angle(x) > (np.pi/2), mask.reshape((n,))),
@@ -537,10 +906,7 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             #''' ########## HIO in object domain - support prior ##########
             iterates[-1] = np.real(x) # real image to initialize
             x_bef = iterates[-1]
-            X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
-            X = (meas**(0.5)) * np.exp(1j* np.angle(X))               
-            #X = A @ ((A_pinv) @ X)
-            x = A_pinv(X) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            x = P_M(x)#(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
 
             x = np.real(x) + 0.j
             indices = np.logical_or(np.logical_and(x<0, mask.reshape((n,))), 
@@ -611,12 +977,15 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
             #'''
             x_bef = iterates[-1]
-            X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
-            X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
-            x = A_pinv(X)
-            x = x * mask.reshape((n,)) + (x - OO_beta * x) * outsideMask.reshape((n,))
-    
-                                              
+            # X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
+            # X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
+            # x = A_pinv(X)
+            x = P_M(x)
+
+            indices = np.logical_not(mask.reshape((n,)))
+            x[indices] = (1 - OO_beta ) * x[indices]
+
+            #x = x * mask.reshape((n,)) + (x - OO_beta * x) * outsideMask.reshape((n,))                           
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)
@@ -626,17 +995,20 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
             #'''
             x_bef = iterates[-1]
-            X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
-            X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
-            x = A_pinv(X) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #np.conjugate(A.T) @ (X)
-         
+            # X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
+            # X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
+            # x = A_pinv(X) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #np.conjugate(A.T) @ (X)
+            x = P_M(x)
             ########## TV Support Regularizaton ####################
             # y = space.element(x.reshape(mask.shape))
             # TVregularize(y, 0.15, Mask, x0, space, niter = 10)
             # x = op(x0)
 
             #x = x * op(mask)
-            x = x_bef * mask.reshape((n,)) + (x_bef - IO_beta * x) * outsideMask.reshape((n,))
+            indices = np.logical_not(mask.reshape((n,)))
+            x[indices] = x_bef[indices] - IO_beta  * x[indices]
+            #x = x_bef * mask.reshape((n,)) + (x_bef - IO_beta * x) * outsideMask.reshape((n,))
+
             #x = soft_shrinkage(x.real, lamda = 0.) + soft_shrinkage(x.imag, lamda = 0.) * 1j # L-1 Regularisation
             #x = (np.sum(meas)**(0.5)/np.linalg.norm(x)) * x #Normalising with Parseval will make us reconstruct the noise
             
@@ -649,19 +1021,19 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
 
         for k in range(maxiter):
    
-            x = x.reshape((n,)) * mask.reshape((n,))
-            X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() # A @(x)
+            # x = x.reshape((n,)) * mask.reshape((n,))
+            # X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() # A @(x)
 
-            X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #attribute measured Fourier Intensities
+            # X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #attribute measured Fourier Intensities
            
-            x = A_pinv(X).flatten() #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #np.conjugate(A.T) @ (X)
+            x = P_M(x) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #np.conjugate(A.T) @ (X)
 
-            x = x * mask.reshape((n,))
+            x = P_S(x)
 
             iterates.append(x)
             if k % 100 == 0: 
                   print('iteration k', k)
-    if Algo == 'Error Reduction + TV-support':
+    if Algo == 'Error Reduction + TV-support': #to revisit
 
         for k in range(maxiter):
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
@@ -701,9 +1073,9 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
         for k in range(maxiter):
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
             #'''
-            X = Af(x).flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
-            X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
-            x = A_pinv(X) # (ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #np.conjugate(A.T) @ (X)
+            # X = Af(x).flatten() # (fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #A @ np.conjugate(x)
+            # X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
+            x = P_M(x) # (ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten() #np.conjugate(A.T) @ (X)
             x = np.abs(x_true_vect) * np.exp(1j* np.angle(x))
 
             ########## TV Support Regularizaton ####################
@@ -754,10 +1126,11 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
         for k in range(maxiter):
             #x = x + beta * (P_S(R_M(x)) - P_M(R_S(x)))
             #'''
-            X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
-            X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
-            #X = A @ ((A_pinv) @ X) #proximal point relative to the range of A. It finds the true support better than a direct support estimation prior appplication. Why?
-            x = A_pinv(X) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            # X = Af(x).flatten() #(fftn(x.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            # X = (meas**(0.5)) * np.exp(1j* np.angle(X))               #/(np.abs(X))) * X
+            # #X = A @ ((A_pinv) @ X) #proximal point relative to the range of A. It finds the true support better than a direct support estimation prior appplication. Why?
+            # x = A_pinv(X) #(ifftn(X.reshape(mask.shape), s = mask.shape, norm = 'ortho')).flatten()
+            x = P_M(x)
             '''
             ########## TV Regularizaton #################### Don't TV regularise. Bad idea here
             y_real = space.element(x.real.reshape(mask.shape))
