@@ -252,10 +252,11 @@ Outlook:
 
 
 Observations:
+-HIO: sometimes, beta = 0.75 is best
 
 -DFT uses (equidistant) sample values x[n], n = 0, ..., N-1 of signal x(t). 
 Sampling can introduce aliasing if the sampling rate is smaller than twice the maximum frequency contained in x(t).
 
 Challenges: 
 
--
+-jsefo is not a sudoers. when installing tkinter
