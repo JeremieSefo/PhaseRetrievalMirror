@@ -58,7 +58,7 @@ class FourierMatrix(sensing_model_matrix_based):
         (Qx, Qy) = int(rx * Nx), int(ry * Ny)
         m = Qx * Qy
         self.Matrix = (1 + 1j)*np.zeros((m,n))
-        for k in range(0): #replace 0 by n
+        for k in range(n): #replace 0 by n
             j = int( k%Ny )
             i = int( (k-j)/ Ny )
             E = np.zeros((Nx,Ny))

@@ -6,7 +6,7 @@ def phase_retrie_plots_alternate(idx, grd_truths, X_sols, map, A, meas, space, A
     maxiter = len(X_sols)
     op = odl.FlatteningOperator(space)
     x_tru = grd_truths[idx]
-    K = np.arange(maxiter)
+    K = np.arange(1, maxiter + 1)
     f_x_sols = [map.f(x) for x in X_sols]
     m = len(A(x_tru.flatten()).flatten())
 

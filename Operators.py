@@ -86,22 +86,34 @@ def spectInit(meas, A):
     
     n = A.shape[1]
     m = A.shape[0]
+    # Sum of measurements
     s1 = np.sum(meas)
     
-    s2 = np.sum( [np.vdot( A[r, :], A[r, :]) for r in range(m)])
-    lamda = np.sqrt(n*s1/s2)
+    # Optimized sum of squared rows of A (avoiding the loop)
+    s2 = np.sum(np.abs(A)**2, axis=1).sum()
+    # Compute lambda directly
+    lamda = np.sqrt(n * s1 / s2)
     '''
     Y = np.zeros((n,n)) #.reshape(n, n)
 
     for r in range(m):
         Y += meas[r] * A[r].reshape(1, n) @ np.conjugate(A[r]).reshape(1, n).T
     Y /= m 
-    '''
+    '''    
+    # Optimized computation of Y
     Y = np.conjugate(A).T @ np.diag(meas) @ A
+    # Efficient eigenvalue computation
     eigenval, eigenvect = np.linalg.eig(Y)
+    
+    # Extract the eigenvector corresponding to the largest eigenvalue
     x0 = eigenvect.real[eigenval.real == max(eigenval.real)][0]  #Complex eigenvalues
-    x0 = x0 * (lamda/np.linalg.norm(x0))
-    return [x0, eigenval.real, eigenvect.real]
+    y0 = eigenvect.imag[eigenval.imag == max(eigenval.imag)][0]  #Complex eigenvalues
+    # x0 = eigenvect[:, np.argmax(eigenval)].real
+    
+    # Normalize the eigenvector
+    x0 = x0 * (lamda / np.linalg.norm(x0))
+    y0 = y0 * (lamda / np.linalg.norm(y0))
+    return [x0 + 1j * y0, eigenval.real, eigenvect.real]
 
 def generate_multivariate_gaussian(mus, sigma, size=1):
     """
@@ -126,6 +138,7 @@ def generate_multivariate_gaussian(mus, sigma, size=1):
 def initialise(n, meas, A, type, real, imag, x_true_vect, mask, noise_lvl ):
     if type == 'spectral':
         x, eigenval_real, eigenvect_real = spectInit(meas, A)
+        x = real * x.real + imag * 1j * x.imag 
     if type == 'Gaussian':
         mus = x_true_vect
         num_samples = 1

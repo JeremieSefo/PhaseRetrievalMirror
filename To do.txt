@@ -248,11 +248,11 @@ to plot (Fourier) iterates : Unable to allocate 15.6 KiB for an array with shape
 
 Outlook:
 
--
+-The higher the image resolution, the more does DFT samples. Result should improve with higher image size. Test that.
 
 
 Observations:
--HIO: sometimes, beta = 0.75 is best
+-HIO: sometimes, beta = 0.5 is best
 
 -DFT uses (equidistant) sample values x[n], n = 0, ..., N-1 of signal x(t). 
 Sampling can introduce aliasing if the sampling rate is smaller than twice the maximum frequency contained in x(t).
@@ -260,3 +260,27 @@ Sampling can introduce aliasing if the sampling rate is smaller than twice the m
 Challenges: 
 
 -jsefo is not a sudoers. when installing tkinter
+
+----------------------------------------------------------------------------------
+
+Outlook:
+
+-
+
+
+Observations:
+
+-spectral init takes 2 minutes for 64*64 images. Not sure if there is improvement in the reconstruction. Test stability (noise)
+At least, Object error look very different
+-'RMRS AAR_beta': 0.72, 0,5, 0.67 seem optimal in that order
+-'RSRM AAR_beta': 0. 67, 0.45 seem optimal
+-'RAAR_beta': 1.0 seems optimal
+-Gaussian DRS sometimes reconstructs homometric structures. Should give AAR, when rho = 0. Check that
+-RMRS = RSRM but don't seem to have the same first Fourier error, whereas having the same object error. strange
+Note however that they do not produce the same iterates. their iterates match with each other only inside the mask.(RS linear, proves this)
+Still, I does not explain why the object errors look alike(even in a non loglog plotting) 
+
+
+Challenges: 
+
+-

@@ -353,7 +353,7 @@ def phase_retrieval(noise, kappa, xi, Algo, map, mask, n, Af, A, A_pinv, meas, m
             Y = Af(P_S(x)).flatten() 
             RX_Y = 2 * Y - X
             Z = (1) * (1/(rho + 1)) * (meas**(0.5)) * np.exp(1j* np.angle(RX_Y)) + (rho/(rho + 1)) * RX_Y 
-            X = (X) + 2 * alpha * (Z - Y) 
+            X =  (X) + 2 * alpha * (Z - Y) 
             x = A_pinv(X) 
             iterates.append(x)
             if k % 100 == 0: 
