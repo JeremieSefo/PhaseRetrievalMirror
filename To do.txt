@@ -265,11 +265,25 @@ Challenges:
 
 Outlook:
 
--
+-Implement the artificial rectangular boundary discussed below.
 
 
 Observations:
 
+This could be a breakthrough:
+
+-unexpected good retrieval of the cancer cell can be misleading if one thinks that its support is the ellipse. It's not. Worst, its highest values are on its true rectangular outer support. 
+This means that we could also improve the reconstruction of the shepp logan, if we modify substitute the object with himself, but included into a thin rectangle at the boundary. 
+This new object then has full rectangular support, like the cancer cell. In this setting, our rectangular mask is always very effective.
+Experimentally, this could mean, letting the beam go through some additional external rectangular window. (not only through the one at the center ). 
+One paper discussed a (maybe) similar (in spirit) type of mask. 
+
+It is amazing to see how the added artificial rectangular boundary helps reconstruct the true inner object support and object itself.
+
+-rectangular window is retrieved
+the ring of gaussian and the disk too (eventhough there is a bit a space to expect translations, it does not happen), up to some TV cleaning
+-cameran is more accurately reconstructed than the sheep logan, because the cameraman fills in totally the rectangular box. 
+While, the sheep logan has freedom to move within the box. And this yields more bad local minima. shrinkwrapping? circular box?
 -spectral init takes 2 minutes for 64*64 images. Not sure if there is improvement in the reconstruction. Test stability (noise)
 At least, Object error look very different
 -'RMRS AAR_beta': 0.72, 0,5, 0.67 seem optimal in that order

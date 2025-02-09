@@ -6,6 +6,18 @@ import scipy.misc
 import cv2
 import imageio
 
+def rect_support(image): 
+    # Step 1: Find the indices of non-zero elements
+    non_zero_indices = np.argwhere(image != 0 )
+    
+    # Step 2: Get the bounding box (min and max indices)
+    min_row, min_col = non_zero_indices.min(axis=0)
+    max_row, max_col = non_zero_indices.max(axis=0)
+
+    box = np.zeros(image.shape)
+    box[min_row : max_row + 1, min_col : max_col + 1 ] = 1.
+    return box
+    
 def crop_center(img, crop_width, crop_height):
     # Load the image
     #img = cv2.imread(img_path)
@@ -54,8 +66,8 @@ class setUpImage:
         # Ky = (self.Ny - 1)//4 #any natural integer below (self.Ny - 1)//2.  
         sx = (2 * self.Kx + 1) / self.Nx #ratio: object length/ full image length,  between 0 and 1
         sy = (2 * self.Ky + 1) / self.Ny #ratio: object length/ full image length,  between 0 and 1
-        sNx = int(sx * self.Nx) #int is optional
-        sNy = int(sy * self.Ny) #int is optional
+        sNx = (2 * self.Kx + 1) # int(sx * self.Nx) #int is optional
+        sNy = (2 * self.Ky + 1) # int(sy * self.Ny) #int is optional
         # mask support
         # tx = .05 #parameter between 0 and 1  for e(t) # 0.35  failed already
         # ty = .05 #parameter between 0 and 1  for e(t) # 0.35  failed already
@@ -68,7 +80,9 @@ class setUpImage:
         esNy = int(ey * sy * self.Ny) #int is optional
         #mask = (0 + 0j) * np.zeros((self.Nx, self.Ny))
         # int(0.5 * (1 - e * s) * self.Nx):int(0.5 * (1 + e * s) * self.Nx), int(0.5 * (1 - e * s) * self.Ny):int(0.5 * (1 + e * s) * self.Ny)
+        
         mask[(self.Nx - esNx)//2  : (self.Nx - esNx)//2 + esNx, (self.Ny - esNy)//2  : (self.Ny - esNy)//2 + esNy] = ((1)*1 + (0) *1j) * np.ones((esNx, esNy))
+
 
         true_support = (0 + 0j) * np.zeros((self.Nx, self.Ny))
         #true_support[ int(0.5 * (1 -  s) * self.Nx)  : int(0.5 * (1 +  s) * self.Nx) , int(0.5 * (1 -  s) * self.Ny) : int(0.5 * (1 +  s) * self.Ny) ] = ((1)*1 + (0) *1j) * np.ones((int(s * self.Nx), int(s * self.Ny)))
@@ -90,7 +104,7 @@ class setUpImage:
         grd_truths = []
         #x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = ((1)*1 + (1) *1j) * np.ones((int((1-2*bord)*self.Nx),int((1-2*bord)*self.Ny))) #(7 + 0j)* np.random.normal(0, 1, size = (int(self.Nx/2),int(self.Ny/2))) + (0 + 5j)* np.random.normal(0, 1, size = (int(self.Nx/2),int(self.Ny/2))) #(i + k *1j) * np.ones((int(self.Nx/2),int(self.Ny/2)))
         im = np.ones((self.Nx, self.Ny))
-        im_res = cv2.resize(im, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        im_res = cv2.resize(im, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
         x_true[lowerX : upperX, lowerY : upperY] = (1 + 0.j) * np.ones(((sNx), (sNy))) #  im_res / np.max(np.abs(im_res)) + 1.j * (- im_res/ np.max(np.abs(im_res)))
         #x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
         x_true = np.rot90(x_true, -1)
@@ -101,8 +115,8 @@ class setUpImage:
 
         image = imageio.imread('ring.png', mode='F')
         image = np.array(image)
-        image = cv2.resize(image, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
-        image_padded = np.pad(image, (self.Nx - sNx)//2, 'constant')
+        imagem = cv2.resize(image, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
+        image_padded = np.pad(imagem, ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
         x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 0.j
         grd_truths.append(x_true)
 
@@ -111,8 +125,8 @@ class setUpImage:
 
         image = imageio.imread('ring.png', mode='F')
         image = np.array(image)
-        image = cv2.resize(image, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
-        image_padded = np.pad(image, (self.Nx - sNx)//2, 'constant')
+        image = cv2.resize(image, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
+        image_padded = np.pad(image,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
         x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 1.j
         grd_truths.append(x_true)
         # Define the size of the image
@@ -127,10 +141,11 @@ class setUpImage:
         # Create the image with ones in the disk and zeros outside
         imagedisk = np.zeros((size, size))
         imagedisk[disk] = 1
-        image = cv2.resize(imagedisk, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
-        imagedisk_padded = np.pad(image, (self.Nx - sNx)//2, 'constant')
+        Imagedisk = imagedisk
+        image = cv2.resize(Imagedisk, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
+        imagedisk_padded = np.pad(image,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
 
-        x_true =  image_padded / np.max(np.abs(image_padded)) + (imagedisk_padded / np.max(np.abs(imagedisk_padded))) * 1.j
+        x_true =  (imagedisk_padded / np.max(np.abs(imagedisk_padded))) + (image_padded / np.max(np.abs(image_padded))) * 0.j
         grd_truths.append(x_true)
 
 
@@ -144,16 +159,22 @@ class setUpImage:
         #x_true = Image.rgb2gray(img)
         #print('true_support.shape', true_support.shape)
         x_true3 = np.array(img) #.resize((self.Nx, self.Ny))
-        x_true3 = cv2.resize(x_true3, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
+        rect_sup = rect_support(x_true3[:, :,0])
+        x_true3 = cv2.resize(x_true3, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
         #x_true3_imag = cv2.resize(x_true3.imag, (int(s * self.Nx), int(s * self.Ny)), interpolation=cv2.INTER_AREA
         #x_true = x_true/np.max(np.abs(x_true))
-        x_true[lowerX : upperX, lowerY : upperY] = x_true3[:, :,0] / np.max(np.abs(x_true3[:, :,0])) + (1j) * (x_true3[:, :,2]/ np.max(np.abs(x_true3[:, :,2])))# np.zeros((self.Nx,self.Ny))
+        x_true = np.pad( x_true3[:, :,0] + (1j) * x_true3[:, :,2] ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
+        # x_true[lowerX : upperX, lowerY : upperY] = x_true3[:, :,0] / np.max(np.abs(x_true3[:, :,0])) + (1j) * (x_true3[:, :,2]/ np.max(np.abs(x_true3[:, :,2])))# np.zeros((self.Nx,self.Ny))
         x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1j
         #x_true *= mask 
         x_true = np.rot90(x_true, -1)
         x_true = np.rot90(x_true, -1)
         #x_true *= mask 
         img.save('resized_image.jpg')
+        ma = cv2.resize(rect_sup, ((esNy), (esNx)), interpolation=cv2.INTER_AREA)
+        mask_cancer = (0 + 0j) * np.zeros((self.Nx, self.Ny))
+        mask_cancer[(self.Nx - esNx)//2  : (self.Nx - esNx)//2 + esNx, (self.Ny - esNy)//2  : (self.Ny - esNy)//2 + esNy] = ((1)*1 + (0) *1j) * ma
+        
         grd_truths.append(x_true)
         
         #complex cameraman
@@ -161,8 +182,9 @@ class setUpImage:
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = ski.img_as_float(ski.data.camera())
         img_res = ski.transform.resize(img, (self.Nx, self.Ny))
-        img_res = cv2.resize(img_res, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
-        x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
+        img_res = cv2.resize(img_res, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
+        x_true = np.pad( 1. * img_res + 1.j * (- img_res) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
+        # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
         x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
         #x_true *= mask 
         # x_true = np.rot90(x_true, -1)
@@ -174,8 +196,9 @@ class setUpImage:
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = ski.img_as_float(ski.data.camera())
         img_res = ski.transform.resize(img, (self.Nx, self.Ny))
-        img_res = cv2.resize(img_res, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
-        x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 0.j# * (- img_res)
+        img_res = cv2.resize(img_res, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
+        x_true = np.pad( 1. * img_res + 0.j , ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
+        # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 0.j# * (- img_res)
         x_true = x_true.real / np.max(np.abs(x_true.real)) + 0.j #* (x_true.imag / np.max(np.abs(x_true.imag))) * 
         #x_true *= mask 
         # x_true = np.rot90(x_true, -1)
@@ -187,8 +210,8 @@ class setUpImage:
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         image = imageio.imread('cameraman.png', mode='F')
         image = np.array(image)
-        image = cv2.resize(image, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
-        image_padded = np.pad(image, (self.Nx - sNx)//2, 'constant')
+        image = cv2.resize(image, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
+        image_padded = np.pad(image,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
         x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 1.j
         # x_true = np.rot90(x_true, -1)
         # x_true = np.rot90(x_true, -1)
@@ -198,21 +221,29 @@ class setUpImage:
         
         #complex shepp logan
 
-        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
+        x_true = (0 + 0j) * np.zeros((self.Nx ,self.Ny))
         img = get_phantom(self.Nx)
-        img_res = cv2.resize(img.real, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
-        x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * ( img_res)
+        rect_sup = rect_support(img) #to define a box that is a tight to the object. Not just a rectangle tight on the heigth but not on the weith
+        img_res = cv2.resize(img.real, ((sNy - 34), (sNx - 34)), interpolation=cv2.INTER_AREA)
+        img_res = np.pad( img_res , ((16, 16), (16, 16)), mode='constant', constant_values=0) #+ 0.j * np.pad( (img_res) , ((1, 1), (1, 1)), mode='constant', constant_values=1)
+        img_res = np.pad( img_res , ((1, 1), (1, 1)), mode='constant', constant_values=1) #+ 0.j * np.pad( (img_res) , ((1, 1), (1, 1)), mode='constant', constant_values=1)
+        x_true = np.pad( 1. * img_res + 1.j * ( img_res) , ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
+        # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * ( img_res)
         x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
-        # x_true = np.rot90(x_true, -1)
-        # x_true = np.rot90(x_true, -1)
+        # rect_sup = rect_support(x_true)
+        ma = cv2.resize(rect_sup, ((esNy), (esNx)), interpolation=cv2.INTER_AREA)
+        mask_shepp = (0 + 0j) * np.zeros((self.Nx, self.Ny))
+        mask_shepp[(self.Nx - esNx)//2  : (self.Nx - esNx)//2 + esNx, (self.Ny - esNy)//2  : (self.Ny - esNy)//2 + esNy] = ((1)*1 + (0) *1j) * ma
+
         grd_truths.append(x_true)
 
         #real shepp logan
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = get_phantom(self.Nx)
-        img_res = cv2.resize(img.real, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
-        x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 0.j #* ( img_res)
+        img_res = cv2.resize(img.real, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
+        x_true = np.pad( 1. * img_res + 0.j * ( img_res) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
+        # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 0.j * ( img_res)
         x_true = x_true.real / np.max(np.abs(x_true.real)) + 0.j # (x_true.imag / np.max(np.abs(x_true.imag))) *
         # x_true = np.rot90(x_true, -1)
         # x_true = np.rot90(x_true, -1)
@@ -222,8 +253,9 @@ class setUpImage:
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         image = scipy.datasets.ascent().astype('complex').reshape((512, 512)) #resize((int((1-2*bord)*self.Nx)*int((1-2*bord)*self.Ny))) #.
-        img_res = cv2.resize(image.real, ((sNx), (sNy)), interpolation=cv2.INTER_AREA)
-        x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
+        img_res = cv2.resize(image.real, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
+        x_true = np.pad( 1. * img_res + 1.j * ( - img_res) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
+        # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
         image = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
         # image = np.rot90(image, 1)
         # image = np.rot90(image, 1)
@@ -249,7 +281,8 @@ class setUpImage:
         im1[0, 0] = 1. + 0j
         im1 = np.fft.fftshift(im1)
         #self.im1 = im1
-        x_true[lowerX : upperX, lowerY : upperY] = 1. * im1 + 0.j * (im1)
+        x_true = np.pad( 1. * im1 + 0.j * (im1) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
+        # x_true[lowerX : upperX, lowerY : upperY] = 1. * im1 + 0.j * (im1)
         x_true = np.fft.ifftshift(x_true)
         grd_truths.append(x_true)
         '''
@@ -269,7 +302,7 @@ class setUpImage:
         '''
         self.mask = mask
         self.grd_truths = grd_truths
-        return grd_truths, mask
+        return grd_truths, mask, mask_shepp, mask_cancer
         ##plt.imshow(-1j * x_true)
         #plt.colorbar()    
 
