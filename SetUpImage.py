@@ -5,7 +5,37 @@ import matplotlib.pyplot as plt
 import scipy.misc
 import cv2
 import imageio
+from scipy.ndimage import binary_dilation
 
+def extend_support_with_holes(image, dilation_radius=1):
+    """
+    Extend the support (boundary) of the shape in the image by ones using dilation,
+    while preserving the holes inside the support shape.
+    
+    Args:
+    - image (np.ndarray): The binary image with the support shape.
+    - dilation_radius (int): The radius by which to extend the support region.
+    
+    Returns:
+    - np.ndarray: The padded image with extended support and preserved holes.
+    """
+    # Perform binary dilation with a square structuring element
+    structure = np.ones((dilation_radius * 2 + 1, dilation_radius * 2 + 1), dtype=bool)
+    dilated_image = binary_dilation(image, structure=structure).astype(int)
+    
+    # Mask out the holes: keep original zero regions that were zeros in the input
+    extended_image = np.where(image == 0, dilated_image, image)
+    
+    return extended_image
+
+
+def exact_support(image): 
+    # Step 1: Find the indices of non-zero elements
+    non_zero_indices = (image != 0 )
+    support = np.zeros(image.shape)
+    support[non_zero_indices] =  1.
+    return support
+    
 def rect_support(image): 
     # Step 1: Find the indices of non-zero elements
     non_zero_indices = np.argwhere(image != 0 )
@@ -165,17 +195,17 @@ class setUpImage:
         #x_true = x_true/np.max(np.abs(x_true))
         x_true = np.pad( x_true3[:, :,0] + (1j) * x_true3[:, :,2] ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
         # x_true[lowerX : upperX, lowerY : upperY] = x_true3[:, :,0] / np.max(np.abs(x_true3[:, :,0])) + (1j) * (x_true3[:, :,2]/ np.max(np.abs(x_true3[:, :,2])))# np.zeros((self.Nx,self.Ny))
-        x_true = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1j
+        x_truecanc = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1j
         #x_true *= mask 
-        x_true = np.rot90(x_true, -1)
-        x_true = np.rot90(x_true, -1)
+        x_true = np.rot90(x_truecanc, -1)
+        x_true = np.rot90(x_truecanc, -1)
         #x_true *= mask 
         img.save('resized_image.jpg')
         ma = cv2.resize(rect_sup, ((esNy), (esNx)), interpolation=cv2.INTER_AREA)
         mask_cancer = (0 + 0j) * np.zeros((self.Nx, self.Ny))
         mask_cancer[(self.Nx - esNx)//2  : (self.Nx - esNx)//2 + esNx, (self.Ny - esNy)//2  : (self.Ny - esNy)//2 + esNy] = ((1)*1 + (0) *1j) * ma
         
-        grd_truths.append(x_true)
+        grd_truths.append(x_truecanc)
         
         #complex cameraman
 
@@ -207,15 +237,15 @@ class setUpImage:
 
         # cameraman
 
-        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
+        x_truec = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         image = imageio.imread('cameraman.png', mode='F')
         image = np.array(image)
         image = cv2.resize(image, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
         image_padded = np.pad(image,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
-        x_true =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 1.j
+        x_truec =  image_padded / np.max(np.abs(image_padded)) + (image_padded / np.max(np.abs(image_padded))) * 1.j
         # x_true = np.rot90(x_true, -1)
         # x_true = np.rot90(x_true, -1)
-        grd_truths.append(x_true)
+        grd_truths.append(x_truec)
         
         #x_true[int(bord * self.Nx):int((1-bord)*self.Nx),int(bord * self.Ny):int((1-bord)*self.Ny)] = get_phantom(int((1-2*bord)*self.Nx)) + get_phantom(int((1-2*bord)*self.Nx)) * 1.j
         
@@ -224,8 +254,9 @@ class setUpImage:
         x_true = (0 + 0j) * np.zeros((self.Nx ,self.Ny))
         img = get_phantom(self.Nx)
         rect_sup = rect_support(img) #to define a box that is a tight to the object. Not just a rectangle tight on the heigth but not on the weith
-        img_res = cv2.resize(img.real, ((sNy - 34), (sNx - 34)), interpolation=cv2.INTER_AREA)
-        img_res = np.pad( img_res , ((16, 16), (16, 16)), mode='constant', constant_values=0) #+ 0.j * np.pad( (img_res) , ((1, 1), (1, 1)), mode='constant', constant_values=1)
+        img_res = cv2.resize(img.real, ((sNy - 2), (sNx - 2)), interpolation=cv2.INTER_AREA)
+        # img_res = cv2.resize(img.real, ((sNy - 34), (sNx - 34)), interpolation=cv2.INTER_AREA)
+        # img_res = np.pad( img_res , ((16, 16), (16, 16)), mode='constant', constant_values=0) #+ 0.j * np.pad( (img_res) , ((1, 1), (1, 1)), mode='constant', constant_values=1)
         img_res = np.pad( img_res , ((1, 1), (1, 1)), mode='constant', constant_values=1) #+ 0.j * np.pad( (img_res) , ((1, 1), (1, 1)), mode='constant', constant_values=1)
         x_true = np.pad( 1. * img_res + 1.j * ( img_res) , ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
         # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * ( img_res)
@@ -237,16 +268,29 @@ class setUpImage:
 
         grd_truths.append(x_true)
 
+
         #real shepp logan
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         img = get_phantom(self.Nx)
         img_res = cv2.resize(img.real, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
-        x_true = np.pad( 1. * img_res + 0.j * ( img_res) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
+        x_true = np.pad( 1. * img_res + 1.j * ( img_res) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
         # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 0.j * ( img_res)
-        x_true = x_true.real / np.max(np.abs(x_true.real)) + 0.j # (x_true.imag / np.max(np.abs(x_true.imag))) *
-        # x_true = np.rot90(x_true, -1)
-        # x_true = np.rot90(x_true, -1)
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + 1.j * (x_true.imag / np.max(np.abs(x_true.imag))) 
+        # get exact image support
+        exact_mask_shepp = exact_support(x_true)
+        grd_truths.append(x_true)
+
+        extended_mask_shepp = extend_support_with_holes(exact_mask_shepp, dilation_radius=2)
+        
+        #shepp + 1j * (cancer * support_shepp) : real and imaginary partshave same support
+        
+        x_truecanc[x_true == 0] = 0 
+        grd_truths.append(x_true.real + 1j * x_truecanc.imag)
+
+        #shepp logan + 1j * cameraman
+        
+        x_true = x_true.real / np.max(np.abs(x_true.real)) + 1.j * (x_truec.imag / np.max(np.abs(x_truec.imag))) 
         grd_truths.append(x_true)
 
         #ascent
@@ -302,7 +346,7 @@ class setUpImage:
         '''
         self.mask = mask
         self.grd_truths = grd_truths
-        return grd_truths, mask, mask_shepp, mask_cancer
+        return grd_truths, mask, mask_shepp,exact_mask_shepp, extended_mask_shepp,  mask_cancer
         ##plt.imshow(-1j * x_true)
         #plt.colorbar()    
 

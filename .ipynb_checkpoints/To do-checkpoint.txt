@@ -298,3 +298,25 @@ Still, I does not explain why the object errors look alike(even in a non loglog 
 Challenges: 
 
 -
+
+----------------------------------------------------------------------------------
+
+Outlook:
+
+- Prove equivalence of projections
+- look at shrinkwrapping
+
+Observations:
+
+-the support precision is key here. exact support in one of the parts leads to better reconstruction, even if real and imaginary parts come out mixed.
+In practice, real part represent the amplitude and imaginary part the phases. Therefore, it makes sense that both must have the same support in the simulations
+
+- The larger is the object support w r t the image size, the more the (periodical replication of the DFT) signal contains high frequencies.
+DFT does not sample at frequencies above 0.5. Thus, more pronounced is the difference even at frequencies below 0.5
+
+On the other hand, the smaller is the object support, the fewer are high frequencies in the DFT signal. It is mainly made of low frequency components.
+Meanwhile, the AFT notices and reaches the high frequency components of the true signal. The latter
+
+Challenges: 
+
+-
