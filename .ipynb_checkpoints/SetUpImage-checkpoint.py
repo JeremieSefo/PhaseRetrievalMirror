@@ -284,9 +284,9 @@ class setUpImage:
         extended_mask_shepp = extend_support_with_holes(exact_mask_shepp, dilation_radius=2)
         
         #shepp + 1j * (cancer * support_shepp) : real and imaginary partshave same support
-        
-        x_truecanc[x_true == 0] = 0 
-        grd_truths.append(x_true.real + 1j * x_truecanc.imag)
+        imag = x_truecanc.copy()
+        imag[x_true == 0] = 0 
+        grd_truths.append(x_true.real + 1j * imag.imag)
 
         #shepp logan + 1j * cameraman
         
@@ -298,7 +298,7 @@ class setUpImage:
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         image = scipy.datasets.ascent().astype('complex').reshape((512, 512)) #resize((int((1-2*bord)*self.Nx)*int((1-2*bord)*self.Ny))) #.
         img_res = cv2.resize(image.real, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
-        x_true = np.pad( 1. * img_res + 1.j * ( - img_res) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
+        x_true = np.pad( -1. * img_res + 1.j * ( + img_res) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
         # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
         image = x_true.real / np.max(np.abs(x_true.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
         # image = np.rot90(image, 1)
@@ -316,18 +316,21 @@ class setUpImage:
         #x_true *= mask 
         #grd_truths.append(x_true)
 
+
+        
         # a single centered dot
-
-        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
-        grd_truths.append(x_true)
-
         im1 = (1 + 0.j) * np.zeros((sNx, sNy))
-        im1[0, 0] = 1. + 0j
+        im1[0, 0] = 0. + 1j
         im1 = np.fft.fftshift(im1)
         #self.im1 = im1
         x_true = np.pad( 1. * im1 + 0.j * (im1) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
         # x_true[lowerX : upperX, lowerY : upperY] = 1. * im1 + 0.j * (im1)
-        x_true = np.fft.ifftshift(x_true)
+        # x_true = np.fft.ifftshift(x_true)
+        grd_truths.append(x_true)
+        
+        # zero image
+
+        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         grd_truths.append(x_true)
         '''
         plt.imshow(x_true.real, cmap='gray')

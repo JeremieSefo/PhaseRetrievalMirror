@@ -304,9 +304,12 @@ Challenges:
 Outlook:
 
 - Prove equivalence of projections
+- proximal of non convex functionals?
 - look at shrinkwrapping
 
 Observations:
+-Gaussian DRS from paper (without alpha) looks more stable as rho changes. look at their ptytography setting closely
+-Gaussian-DRS TVS_M 0.005 with rect supp is the best performing TV
 
 -the support precision is key here. exact support in one of the parts leads to better reconstruction, even if real and imaginary parts come out mixed.
 In practice, real part represent the amplitude and imaginary part the phases. Therefore, it makes sense that both must have the same support in the simulations
