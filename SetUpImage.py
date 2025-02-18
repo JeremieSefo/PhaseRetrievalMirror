@@ -184,7 +184,7 @@ class setUpImage:
         # cancer cell
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
-        img = Image.open('ISIC_0000004_cancer.jpg')
+        img = Image.open('ISIC_0000004_cancer.jpg') # ISIC_0000004_cancer
         #img = iio.v2.imread('ISIC_0000004_cancer.jpg')
         #x_true = Image.rgb2gray(img)
         #print('true_support.shape', true_support.shape)
@@ -297,6 +297,7 @@ class setUpImage:
 
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         image = scipy.datasets.ascent().astype('complex').reshape((512, 512)) #resize((int((1-2*bord)*self.Nx)*int((1-2*bord)*self.Ny))) #.
+        image = imageio.imread('barbara.jpg', mode='F')
         img_res = cv2.resize(image.real, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
         x_true = np.pad( -1. * img_res + 1.j * ( + img_res) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
         # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
