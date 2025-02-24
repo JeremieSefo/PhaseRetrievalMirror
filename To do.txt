@@ -334,6 +334,8 @@ Outlook:
 
 Observations:
 
+-Gaussian loss function, though not convex, has subgradient, but locally. Show it by finding the local region (formed of elements with the same phase or sign?).
+
 -Fourier measurements make errors comparison across different parameters, like object-to-image ratio difficult to apprehend, due to many global minima, like the negative signed, negative conjugate,...
 Random measurements allow to see the same pick (at ratios around 0.17) without additional global minima effect in the L2 object error.
 Correct in-depth phase or switch to random observation to conduct these specific analyses

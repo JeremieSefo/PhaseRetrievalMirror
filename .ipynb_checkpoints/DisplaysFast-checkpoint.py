@@ -240,13 +240,20 @@ def phase_retrie_plots_desk(idx, grd_truths, X_sols, map, A, meas, maxiter, spac
     plt.show()
     return f_X_sols, Err
 
-# #correct global phase : close form of the 1D optimizer
+def P_S(x, mask):
+    n = len(x)
+    x = x.copy()
+    indices = np.logical_not(mask.reshape((n,)))
+    x[indices] = 0
+    return x 
+
+#correct global phase : close form of the 1D optimizer
 def correct_phase(x, x_true):
     lambd = np.vdot(x, x_true)
     phi = np.arctan(lambd.imag/lambd.real)
     return np.exp(phi * 1.j) * x
 
-def phase_retrie_plots_noPlot(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Algos):
+def phase_retrie_plots_noPlot(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Algos, mask):
     op = odl.FlatteningOperator(space)
 
     # fig = plt.figure(figsize=(32, 32))
@@ -294,7 +301,7 @@ def phase_retrie_plots_noPlot(idx, grd_truths, X_sols, map, A, meas, maxiter, sp
         # plt.colorbar(im, ax=ax1)
 
         #compute errors
-        f_x_sols = [map.f(xt) for xt in X_sols[i]]
+        f_x_sols = [map.f(P_S(xt, mask)) for xt in X_sols[i]]
         o = np.zeros(x_true.flatten().shape)
         rr = [e / map.f(o) for e in f_x_sols]
         f_X_sols.append(f_x_sols)
@@ -315,7 +322,7 @@ def phase_retrie_plots_noPlot(idx, grd_truths, X_sols, map, A, meas, maxiter, sp
         # ax.set_ylabel('Fourier magnitude error for different frequencies ')
 
 
-        err = [np.linalg.norm(correct_phase(xt.reshape(x_true.shape), x_true) - x_true) for xt in X_sols[i]]
+        err = [np.linalg.norm(correct_phase(P_S(xt, mask).reshape(x_true.shape), x_true) - x_true) for xt in X_sols[i]]
         re = [e / np.linalg.norm(x_true) for e in err]
         # err = [np.linalg.norm(xt - x_true.flatten()) for xt in X_sols[i]]
         Err.append(err)
@@ -330,4 +337,32 @@ def phase_retrie_plots_noPlot(idx, grd_truths, X_sols, map, A, meas, maxiter, sp
 
     # plt.tight_layout()
     # plt.show()
+    return f_X_sols, RR, Err, RE
+def phase_retrie_plots_noPlot_full_error(idx, grd_truths, X_sols, map, A, meas, maxiter, space, Algos, mask):
+    op = odl.FlatteningOperator(space)
+  
+    x_true = grd_truths[idx]
+
+    f_X_sols = []
+    RR = []
+    Err = []
+    RE = []
+
+    # Loop over test images and the algorithms 
+    for i, algo in enumerate(Algos):
+
+        #compute errors
+        f_x_sols = [map.f(xt) for xt in X_sols[i]]
+        o = np.zeros(x_true.flatten().shape)
+        rr = [e / map.f(o) for e in f_x_sols]
+        f_X_sols.append(f_x_sols)
+        RR.append(rr)
+
+
+        err = [np.linalg.norm(correct_phase(xt.reshape(x_true.shape), x_true) - x_true) for xt in X_sols[i]]
+        re = [e / np.linalg.norm(x_true) for e in err]
+        # err = [np.linalg.norm(xt - x_true.flatten()) for xt in X_sols[i]]
+        Err.append(err)
+        RE.append(re)
+
     return f_X_sols, RR, Err, RE
