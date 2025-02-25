@@ -1,3 +1,6 @@
+.venv/
+.vscode/
+__pycache__/
 /first_result.png
 /mirror_descent_check.ipynb
 /test.py
@@ -12,3 +15,4 @@ camPhase.png
 camerama.png
 shepp spectrum, halfs are 84 x 84.jpg
 shepp, halfs are  84 x 84.jpg
+
