@@ -3,7 +3,7 @@
 
 Clone this repository using the following command: 
 
-git clone --depth 1 https://github.com/username/repository.git
+git clone --depth 1 https://github.com/JeremieSefo/PhaseRetrievalMirror
 
 It will download only the most recent commit history, make the clone faster and save memory space.
 
