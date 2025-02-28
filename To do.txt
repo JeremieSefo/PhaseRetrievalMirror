@@ -308,6 +308,9 @@ Outlook:
 - look at shrinkwrapping
 
 Observations:
+
+-reconstruction error from fourier measurements oscillates a lot. linear decay is not clear, though good reconstruction is achieved. 
+There is simply too many (hard to overcome) local (eventually global) minima.
 -Gaussian DRS from paper (without alpha) looks more stable as rho changes. look at their ptytography setting closely
 -Gaussian-DRS TVS_M 0.005 with rect supp is the best performing TV
 
@@ -333,6 +336,12 @@ Outlook:
 
 
 Observations:
+
+- Poisson DRS rho shows consistently good linear decays with random measurements.
+
+With Fourier data, stagnation  happens for all rho > 0
+
+- Poisson DRS with averaging alpha is more interesting than averaging with rho, in terms of results
 
 -errors inside the box, All Gaussian DRS converges linearly, even AAR, but with different rates
 
