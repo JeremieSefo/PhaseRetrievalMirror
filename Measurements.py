@@ -14,7 +14,7 @@ def generate_multivariate_gaussian(mus, sigma, size=1):
     # Ensure lambdas is a numpy array
     mus = np.array(mus)
     # Generate samples for each Poisson distribution
-    samples = ([np.random.normal(mu, sigma, size) for mu in mus]) #[np.random.poisson(lam, size) for lam in lambdas]
+    samples = ([np.abs(np.random.normal(mu, sigma, size)) for mu in mus]) #[np.random.poisson(lam, size) for lam in lambdas]
     
     # Combine samples into a multivariate array
     multivariate_samples = np.stack(samples, axis=-1)
@@ -35,7 +35,7 @@ def generate_multivariate_poisson(lambdas, size=1):
     lambdas = np.array(lambdas)
     
     # Generate samples for each Poisson distribution
-    samples = [np.random.poisson(lam, size) for lam in lambdas]
+    samples = [np.abs(np.random.poisson(lam, size)) for lam in lambdas]
     
     # Combine samples into a multivariate array
     multivariate_samples = np.stack(samples, axis=-1)
@@ -71,7 +71,7 @@ class gauss_noisy_meas(noisy_meas):
 
         # self.synt_meas = np.abs(self.z)**2 + (1. + 0.j) * self.noise 
 
-        self.NSR = np.linalg.norm(self.noise) / np.linalg.norm(np.abs(self.z)**2)
+        self.NSR = np.linalg.norm(self.noise)**2 / ( 4 * np.linalg.norm(np.abs(self.z)**2)**2 )
         return self.synt_meas, self.noise, self.NSR
 
 class poiss_noisy_meas(noisy_meas):
@@ -93,7 +93,7 @@ class poiss_noisy_meas(noisy_meas):
 
         #self.synt_meas = np.abs(self.z)**2 + (1. + 0.j) * self.noise 
 
-        self.NSR = np.linalg.norm(self.noise) / np.linalg.norm(np.abs(self.z)**2)
+        self.NSR = np.linalg.norm(self.noise)**2 / (4 * np.linalg.norm(np.abs(self.z)**2)**2 )
         return self.synt_meas, self.noise, self.NSR
 
     

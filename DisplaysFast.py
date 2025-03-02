@@ -303,7 +303,8 @@ def phase_retrie_plots_noPlot(idx, grd_truths, X_sols, map, A, meas, maxiter, sp
         #compute errors
         f_x_sols = [map.f(P_S(xt, mask)) for xt in X_sols[i]]
         o = np.zeros(x_true.flatten().shape)
-        rr = [e / map.f(o) for e in f_x_sols]
+        noisefree_b = (np.mean(np.abs(A(x_true.flatten()).flatten())**4))/4
+        rr = [e / noisefree_b for e in f_x_sols] # map.f(o)
         f_X_sols.append(f_x_sols)
         RR.append(rr)
         
@@ -353,8 +354,9 @@ def phase_retrie_plots_noPlot_full_error(idx, grd_truths, X_sols, map, A, meas, 
 
         #compute errors
         f_x_sols = [map.f(xt) for xt in X_sols[i]]
-        o = np.zeros(x_true.flatten().shape)
-        rr = [e / map.f(o) for e in f_x_sols]
+        o = np.zeros(x_true.flatten().shape) 
+        noisefree_b = (np.mean(np.abs(A(x_true.flatten()).flatten())**4))/4
+        rr = [e / noisefree_b for e in f_x_sols] # map.f(o)
         f_X_sols.append(f_x_sols)
         RR.append(rr)
 

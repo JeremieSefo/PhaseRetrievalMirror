@@ -355,3 +355,43 @@ Correct in-depth phase or switch to random observation to conduct these specific
 Challenges: 
 
 -
+
+
+
+----------------------------------------------------------------------------------
+
+Outlook:
+
+- Discuss how TV helps clean DRS with random measurements. With Fourier data, DRS doe not compete with AAR
+
+Observations:
+
+-Non convexity with noisy (even with noiseless) Fourier data is severe . 
+Thus ability of AAR to escape local minima makes him outperform DRS and RAAR in presence of Poisson noise (even in the absence). 
+gaussian noise makes life harder for both of then
+AAR error improves with the number of iteration (despite heavy residual on the outside), while DRS is forever stuck
+
+I thought (range width = 1e+9 of magnitudes values creates bad local minima). But even AAR retrieves the Dirac impulse (constant diff patt) only locally
+
+-#poiss 10000 corresponds to gauss 5.1e-3 corresponds to NSR = 1e-7 (Fourier A). this is already sufficient noise, looking at the diffraction patterns
+
+
+-u1 of AAR has noisy magnitudes (if P_S(u0) = u0). While DRS (rho > 0) stays always above the noise lvl and is more stable
+Avoiding P_S(u0) = u0 did not prohibit the AAR to increase in presence of noise (divergence behavior?)
+With poisson noise, divergence behaviour of AAR is less pronounced. Error  increases but tends to stabilize.
+#poiss 100 corresponds to gauss 0.038 corresponds to NSR = 0.01 (random A), NSR = 3.7e-5. (Fourier A).
+Poisson noise is much better distributed, making DRS (both Gaussian and Poisson) to reconstruct better images than when noise is gaussian.
+
+
+
+Gaussian DRS seems to decrease the errors slightly more than Poisson DRS, with both gaussian and poisson noise. Is it because the loss function f is the intensity-based Gaussian and not the log Poisson?
+
+- Gaussian noise is not appropriate. Same lvl of noise is added in each detector pixel. Noise is not proportional to the true intensity.
+Therefore, unless, the noise level is very small (snr = 10-7, i,e. noise_lvl = 10-3), DRS methods fail and stagnate at local minima
+
+- AAR performs worse than DRS (rho = 0.5) in presence of noise, since it tries to fit noisy measurements
+
+
+Challenges: 
+
+-
