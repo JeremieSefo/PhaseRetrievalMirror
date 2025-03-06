@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 import skimage as ski
+from skimage.color import rgb2gray
 import matplotlib.pyplot as plt
 import scipy.misc
 import cv2
@@ -298,6 +299,18 @@ class setUpImage:
         x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
         image = scipy.datasets.ascent().astype('complex').reshape((512, 512)) #resize((int((1-2*bord)*self.Nx)*int((1-2*bord)*self.Ny))) #.
         image = imageio.imread('barbara.jpg', mode='F')
+        img_res = cv2.resize(image.real, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
+        x_true = np.pad( -1. * img_res + 1.j * ( + img_res) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
+        # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)
+        image = x_truec.real / np.max(np.abs(x_truec.real)) + (x_true.imag / np.max(np.abs(x_true.imag))) * 1.j
+        # image = np.rot90(image, 1)
+        # image = np.rot90(image, 1)
+        grd_truths.append(image)
+
+        #cameraman + i astronaut
+
+        x_true = (0 + 0j) * np.zeros((self.Nx,self.Ny))
+        image = rgb2gray( ski.data.astronaut() ).reshape((512, 512)) #resize((int((1-2*bord)*self.Nx)*int((1-2*bord)*self.Ny))) #.
         img_res = cv2.resize(image.real, ((sNy), (sNx)), interpolation=cv2.INTER_AREA)
         x_true = np.pad( -1. * img_res + 1.j * ( + img_res) ,  ( ((self.Nx - sNx)//2, (self.Nx - sNx)//2), ((self.Ny - sNy)//2, (self.Ny - sNy)//2)), 'constant')
         # x_true[lowerX : upperX, lowerY : upperY] = 1. * img_res + 1.j * (- img_res)

@@ -35,7 +35,7 @@ def generate_multivariate_poisson(lambdas, size=1):
     lambdas = np.array(lambdas)
     
     # Generate samples for each Poisson distribution
-    samples = [np.abs(np.random.poisson(lam, size)) for lam in lambdas]
+    samples = [np.random.poisson(lam, size) for lam in lambdas]
     
     # Combine samples into a multivariate array
     multivariate_samples = np.stack(samples, axis=-1)
