@@ -220,9 +220,7 @@ Together with numerical errors
 
 -It is crucial to first tigthen the support in order to exploit available high frequencies data
 -(random A) Gaussian DRS + M_TVS handles huge (Poisson) noise better (converges faster) than Poison DRS + M_TVS
-
--TV1 handles the noise better than other TVS, at least when A is randomly sampled                                                      : best TV
-
+-TV1 handles the noise better than other TVS, at least when A is randomly sampled
 -they do find a solution to the noiseless problem. 
 But with noisy data, satisfying the support constraint seems to prohibit the error to go to zero : Inconsistency. 
 They get stucked at good local minima, but not at the solution, not even after initializing locally. 
@@ -289,7 +287,7 @@ While, the sheep logan has freedom to move within the box. And this yields more 
 -spectral init takes 2 minutes for 64*64 images. Not sure if there is improvement in the reconstruction. Test stability (noise)
 At least, Object error look very different
 -'RMRS AAR_beta': 0.72, 0,5, 0.67 seem optimal in that order
--'RSRM AAR_beta': 0.67, 0.45 seem optimal
+-'RSRM AAR_beta': 0. 67, 0.45 seem optimal
 -'RAAR_beta': 1.0 seems optimal
 -Gaussian DRS sometimes reconstructs homometric structures. Should give AAR, when rho = 0. Check that
 -RMRS = RSRM but don't seem to have the same first Fourier error, whereas having the same object error. strange
@@ -392,44 +390,6 @@ Gaussian DRS seems to decrease the errors slightly more than Poisson DRS, with b
 Therefore, unless, the noise level is very small (snr = 10-7, i,e. noise_lvl = 10-3), DRS methods fail and stagnate at local minima
 
 - AAR performs worse than DRS (rho = 0.5) in presence of noise, since it tries to fit noisy measurements
-
-
-Challenges: 
-
--
-
-
-----------------------------------------------------------------------------------
-
-Outlook:
-
-- illustrate proposition giving different local proximal points 
-
--Sefo, the square is convex. Use it as search region C instead of the ball.
-No Sefo, T will not necessarily map to square back into itself. Projection P_X does not happen pointwise
-
-
-- Implement new DRS, Study non convex analysis, write numerical results
-
--add RAAR, HPR to thesis
-
-Observations:
-
-- noise creates inconsistency. Since P_Y (Fix T) \subset X \Cup Y,  AAR map has then no fixed point and thus does not converge
-
--'RSRM AAR_beta': 0.57, 0.71,  0.26 seem optimal in that order
-
--A shoot of TV1 helps stabilize DRS for all parameters. But alpha = 0.5 seems efficient accross different images, not 0.36
-
-- 'Gaussian-DRS + M_TVS',  'Gaussian-DRS + TVS_M' don't work on Fourier (even noiseless) data : paralysie
-Begin DRs with Prox_Y, you paralyse it. TV does not help much in that case.
-
-
-- HIO is a powerful tool, use it for your videos
-- With Fourier data, DRS works if alpha is used (between 0.15 and 0.75.  (0.5=AAR) ) with rho = 0. For alpha between 0.2 and 0.5, images stay clean. 
-0.33 or 0.36 seems Optimal, 0.5 (AAR) suffers a bit, some times: TV could help. 
-No apperent differernce between Poisson and Gaussian, at this noiseless stage
-
 
 
 Challenges: 
