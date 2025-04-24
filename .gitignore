@@ -1,3 +1,7 @@
+.ipynb_checkpoints/
+.venv/
+.vscode/
+__pycache__/
 /first_result.png
 /mirror_descent_check.ipynb
 /test.py
@@ -5,3 +9,11 @@
 /test_spyder.py
 /Unicaen’s phoenix.png
 large_array.dat
+.ipynb_checkpoints
+results_desk
+barPhase.png
+camPhase.png
+camerama.png
+shepp spectrum, halfs are 84 x 84.jpg
+shepp, halfs are  84 x 84.jpg
+

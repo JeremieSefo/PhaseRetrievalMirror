@@ -144,7 +144,7 @@ def initialise(n, meas, A, type, real, imag, x_true_vect, mask, noise_lvl ):
         num_samples = 1
         #x = real * generate_multivariate_gaussian(mus.real, noise_lvl, num_samples) +  imag * 1.j * generate_multivariate_gaussian(mus.imag, noise_lvl, num_samples)
 
-        x = real * ((1. + 0.j)*np.random.normal(0.75, noise_lvl, size = (n, ) )) + imag * (0. + 1.j)*np.random.normal(0.75, noise_lvl, size = (n, ) )
+        x = real * ((1. + 0.j)*np.abs(np.random.normal(0.75, noise_lvl, size = (n, ) ))) + imag * (0. + 1.j)*np.abs(np.random.normal(0.75, noise_lvl, size = (n, ) ))
         #x = x * (noise_lvl/(1. * np.linalg.norm(x)))
     if type == 'close':
         guessNoise  = real * ((1. + 0.j)*np.random.normal(0, 1, size = x_true_vect.shape) + imag  *  (0. + 1.j)* np.random.normal(0, 1, size = x_true_vect.shape))
