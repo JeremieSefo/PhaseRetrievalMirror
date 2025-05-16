@@ -45,7 +45,7 @@ def update_frame_from_video(video_file, frame_idx, zoom_factor=2):
 
     cap.release()
 
-from moviepy import VideoFileClip
+from moviepy.editor import VideoFileClip
 
 def convert_to_mp4(input_file, output_file):
     clip = VideoFileClip(input_file)
